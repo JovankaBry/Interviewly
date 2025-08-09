@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interviewly</title>
+<link rel="stylesheet" href="../static/css/style.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div>
+      <h1 class="app-name">Interviewly</h1>
+      <div class="accent"></div>
+      <p class="subtitle">Track your applications at a glance.</p>
+    </div>
+  </div>
+
+  <!-- Two big tiles -->
+  <div class="tiles-row">
+    <a href="/applications" class="tile tile-dark1">
+      <div class="tile-title">Applications</div>
+      <div class="tile-number">0</div>
+      <div class="tile-hint">View & update</div>
+    </a>
+
+    <a href="/stats" class="tile tile-dark2">
+      <div class="tile-title">Stats</div>
+      <div class="tile-number">0/0</div>
+      <div class="tile-hint">Progress & charts</div>
+    </a>
+  </div>
+
+  <!-- Status overview -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="section-title">Status overview</h2>
+      <a href="/stats" class="header-link">View charts →</a>
+    </div>
+
+    <div class="status-list">
+      <!-- Example status row -->
+      <a href="/applications?filter=Pending" class="status-row"> <!-- bisa difilter kalau pending/interview/accepted dipencet-->
+        <div class="status-left">
+          <span class="status-pill pending">Pending</span>
+          <span class="count-text">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill pending" style="width: 0%"></div>
+        </div>
+      </a>
+
+      <a href="/applications?filter=Interview" class="status-row">
+        <div class="status-left">
+          <span class="status-pill interview">Interview</span>
+          <span class="count-text">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill interview" style="width: 0%"></div>
+        </div>
+      </a>
+
+      <a href="/applications?filter=Accepted" class="status-row">
+        <div class="status-left">
+          <span class="status-pill accepted">Accepted</span>
+          <span class="count-text">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill accepted" style="width: 0%"></div>
+        </div>
+      </a>
+
+      <a href="/applications?filter=Rejected" class="status-row">
+        <div class="status-left">
+          <span class="status-pill rejected">Rejected</span>
+          <span class="count-text">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill rejected" style="width: 0%"></div>
+        </div>
+      </a>
+
+      <a href="/applications?filter=No Answer" class="status-row">
+        <div class="status-left">
+          <span class="status-pill noanswer">No Answer</span>
+          <span class="count-text">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill noanswer" style="width: 0%"></div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent updates -->
+  <div class="card">
+    <h2 class="section-title">Recent updates</h2>
+    <p class="muted">Nothing yet. Add your first application.</p>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="actions">
+    <a href="/applications" class="btn">My Applications</a>
+    <a href="/new" class="btn-outline">Add New</a>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Add button -->
+<a href="{{ url_for('applications.new') }}" class="add-btn">+ Add Application</a>
+
+<!-- List -->
+<div class="list">
+  {% for r in rows %}
+  <div class="card">
+    <div class="title">{{ r.position }}</div>
+
+    <!-- tap company -> /companies/[name] -->
+    <a class="company" href="/companies/{{ r.company|urlencode }}">{{ r.company }}</a>
+
+    <div class="status-row">
+      <span class="status-label">Status:</span>
+
+      <!-- pill opens modal -->
+      <button class="pill {{ r.status|lower|replace(' ','') }}" onclick="openMenu('{{ r.id }}')">
+        {{ r.status }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal menu (one per item for simplicity) -->
+  <dialog id="menu-{{ r.id }}" class="menu">
+    <form method="dialog" class="menu-backdrop" onclick="closeMenu('{{ r.id }}')"></form>
+    <div class="menu-card">
+      <div class="menu-title">Change status</div>
+      <div class="menu-list">
+        {% for st in ['Pending','Interview','Accepted','Rejected','No Answer'] %}
+        <form method="post" action="{{ url_for('applications.set_status', app_id=r.id) }}">
+          <input type="hidden" name="status" value="{{ st }}">
+          <button class="pill {{ st|lower|replace(' ','') }}" type="submit">{{ st }}</button>
+        </form>
+        {% endfor %}
+      </div>
+      <button class="menu-close" onclick="closeMenu('{{ r.id }}')">Close</button>
+    </div>
+  </dialog>
+  {% endfor %}
+
+  {% if rows|length == 0 %}
+    <div class="muted">No applications yet.</div>
+  {% endif %}
+</div>
+
+<script>
+  function openMenu(id){ document.getElementById('menu-'+id).showModal(); }
+  function closeMenu(id){ document.getElementById('menu-'+id).close(); }
+</script>
+
+{% endblock %}

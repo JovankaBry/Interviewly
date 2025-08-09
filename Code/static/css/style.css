@@ -1,0 +1,249 @@
+:root {
+  --primary: #2563eb;
+  --warn: #fbbf24;
+  --ok: #10b981;
+  --bad: #ef4444;
+  --muted: #9ca3af;
+  --bg: #0f172a;
+  --text: #f8fafc;
+  --border: #1e293b;
+  --radius: 8px;
+  --gap: 14px;
+}
+
+body {
+  background-color: var(--bg);
+  font-family: sans-serif;
+  color: var(--text);
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.container {
+  padding: var(--gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* Hero */
+.hero {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  background-color: #0e1626;
+}
+
+.app-name {
+  font-size: 26px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.accent {
+  margin-top: 6px;
+  width: 140px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--primary);
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Tiles */
+.tiles-row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.tile {
+  flex: 1;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tile-dark1 {
+  background-color: #0b1220;
+}
+
+.tile-dark2 {
+  background-color: #10192b;
+}
+
+.tile-title {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.tile-number {
+  font-size: 22px;
+  font-weight: 800;
+  align-self: center;
+}
+
+.tile-hint {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+/* Card */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  background-color: #0e1626;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.header-link {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: #0b1220;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Status overview */
+.status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-left {
+  width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-text {
+  font-weight: 700;
+}
+
+.bar-track {
+  flex: 1;
+  height: 10px;
+  background-color: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.status-pill {
+  display: inline-block;
+  min-width: 90px; /* makes all pills same width */
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: black; /* black text */
+}
+
+.pending   { background-color: var(--primary); }
+.interview { background-color: var(--warn); }
+.accepted  { background-color: var(--ok); }
+.rejected  { background-color: var(--bad); }
+.noanswer  { background-color: var(--muted); }
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+
+.btn, .btn-outline {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.btn {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* --------- Applications ---------*/
+.add-btn{
+  display:block; text-align:center; background:var(--primary); color:#000;
+  font-weight:700; padding:14px; border-radius:var(--radius)
+}
+
+.title{ font-size:16px; font-weight:600; margin-bottom:2px }
+.company{ color:var(--muted); margin-bottom:8px; display:inline-block; text-decoration:underline }
+
+.status-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px }
+.status-label{ color:var(--text) }
+
+/* pills: equal width + black text */
+.pill{
+  display:inline-block; min-width:110px; text-align:center;
+  padding:10px 16px; border-radius:999px; font-weight:700; color:#000;
+  border:none; cursor:pointer;
+}
+.pending{   background:var(--primary) }
+.interview{ background:var(--warn) }
+.accepted{  background:var(--ok) }
+.rejected{  background:var(--bad) }
+.noanswer{  background:var(--muted) }
+
+/* modal (dialog) */
+.menu::backdrop{ background:rgba(0,0,0,.4) }
+.menu-card{
+  background:#121217; border:1px solid var(--border); border-radius:var(--radius);
+  padding:var(--gap); width:min(520px,92vw)
+}
+.menu-title{ font-weight:700; margin-bottom:10px; font-size:16px }
+.menu-list{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px }
+.menu-close{
+  background:transparent; border:1px solid var(--border);
+  color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer
+}
