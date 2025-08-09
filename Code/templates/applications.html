@@ -2,53 +2,97 @@
 {% block content %}
 
 <!-- Add button -->
-<a href="{{ url_for('applications.new') }}" class="add-btn">+ Add Application</a>
+<div class="list-header">
+  <a href="{{ url_for('applications.new') }}" class="add-btn">
+    <span class="add-btn-icon">+</span>
+    <span class="add-btn-text">Add Application</span>
+  </a>
+</div>
 
-<!-- List -->
+<!-- Application List -->
 <div class="list">
   {% for r in rows %}
   <div class="card">
     <div class="title">{{ r.position }}</div>
-
-    <!-- tap company -> /companies/[name] -->
     <a class="company" href="/companies/{{ r.company|urlencode }}">{{ r.company }}</a>
 
-    <div class="status-row">
+    <div class="status-container">
       <span class="status-label">Status:</span>
 
-      <!-- pill opens modal -->
-      <button class="pill {{ r.status|lower|replace(' ','') }}" onclick="openMenu('{{ r.id }}')">
-        {{ r.status }}
+      <!-- Trigger -->
+      <button
+        class="status-pill {{ r.status|lower|replace(' ','') }}"
+        type="button"
+        onclick="openStatusMenu('{{ r.id }}', this, event)">
+        {{ r.status }} <span class="dropdown-arrow">▼</span>
       </button>
     </div>
+
+    <!-- Hidden form to submit status change -->
+    <form id="form-{{ r.id }}" method="post"
+          action="{{ url_for('applications.set_status', app_id=r.id) }}">
+      <input type="hidden" name="status" value="{{ r.status }}">
+    </form>
   </div>
-
-  <!-- Modal menu (one per item for simplicity) -->
-  <dialog id="menu-{{ r.id }}" class="menu">
-    <form method="dialog" class="menu-backdrop" onclick="closeMenu('{{ r.id }}')"></form>
-    <div class="menu-card">
-      <div class="menu-title">Change status</div>
-      <div class="menu-list">
-        {% for st in ['Pending','Interview','Accepted','Rejected','No Answer'] %}
-        <form method="post" action="{{ url_for('applications.set_status', app_id=r.id) }}">
-          <input type="hidden" name="status" value="{{ st }}">
-          <button class="pill {{ st|lower|replace(' ','') }}" type="submit">{{ st }}</button>
-        </form>
-        {% endfor %}
-      </div>
-      <button class="menu-close" onclick="closeMenu('{{ r.id }}')">Close</button>
-    </div>
-  </dialog>
   {% endfor %}
+</div>
 
-  {% if rows|length == 0 %}
-    <div class="muted">No applications yet.</div>
-  {% endif %}
+<!-- Floating status menu (one instance only) -->
+<div id="status-menu" class="floating-menu" role="menu" aria-hidden="true">
+  <button type="button" class="status-option pending"   data-status="Pending">Pending</button>
+  <button type="button" class="status-option interview" data-status="Interview">Interview</button>
+  <button type="button" class="status-option accepted"  data-status="Accepted">Accepted</button>
+  <button type="button" class="status-option rejected"  data-status="Rejected">Rejected</button>
+  <button type="button" class="status-option noanswer"  data-status="No Answer">No Answer</button>
 </div>
 
 <script>
-  function openMenu(id){ document.getElementById('menu-'+id).showModal(); }
-  function closeMenu(id){ document.getElementById('menu-'+id).close(); }
+  let CURRENT_ID = null;
+
+  function openStatusMenu(id, btn, ev) {
+    ev.stopPropagation();
+    CURRENT_ID = id;
+
+    const menu = document.getElementById('status-menu');
+    const rect = btn.getBoundingClientRect();
+
+    // position menu just under the button
+    menu.style.left = (window.scrollX + rect.left) + 'px';
+    menu.style.top  = (window.scrollY + rect.bottom + 6) + 'px';
+    menu.classList.add('show');
+    menu.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeStatusMenu() {
+    const menu = document.getElementById('status-menu');
+    menu.classList.remove('show');
+    menu.setAttribute('aria-hidden', 'true');
+    CURRENT_ID = null;
+  }
+
+  // click on an option => submit hidden form
+  document.getElementById('status-menu').addEventListener('click', function (e) {
+    const btn = e.target.closest('.status-option');
+    if (!btn || !CURRENT_ID) return;
+
+    const status = btn.dataset.status;
+    const form = document.getElementById('form-' + CURRENT_ID);
+    if (!form) return;
+
+    form.querySelector('input[name="status"]').value = status;
+    closeStatusMenu();
+    form.submit();
+  });
+
+  // close on outside click / scroll / resize
+  document.addEventListener('click', closeStatusMenu);
+  window.addEventListener('scroll', closeStatusMenu, { passive: true });
+  window.addEventListener('resize', closeStatusMenu);
+
+  // prevent clicks inside menu from bubbling to document
+  document.getElementById('status-menu').addEventListener('click', function (e) {
+    e.stopPropagation();
+  });
 </script>
 
 {% endblock %}

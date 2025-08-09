@@ -12,7 +12,10 @@
   <a href="{{ url_for('stats.stats') }}" class="tile tile-dark2">
     <div class="tile-title">Statistics</div>
     <div class="tile-number">{{ counts['Accepted'] }}/{{ total }}</div>
-    <div class="tile-hint">Success rate: {{ '%.1f'|format((counts['Accepted'] / total * 100) if total else 0) }}%</div>
+    <div class="tile-hint">
+      Success rate:
+      {{ '%.1f'|format((counts['Accepted'] / total * 100) if total else 0) }}%
+    </div>
   </a>
 </div>
 
@@ -29,14 +32,18 @@
       {% set value = counts[label] %}
       {% set pct = (value / total * 100) if total else 0 %}
       <a href="{{ url_for('applications.list_applications', filter=label) }}" class="status-row">
+        <!-- Left: Pill + Count -->
         <div class="status-left">
           <span class="status-pill {{ label|lower|replace(' ','') }}">{{ label }}</span>
           <span class="count-text">{{ value }}</span>
         </div>
+
+        <!-- Right: Progress bar + Percentage -->
         <div class="status-right">
-          <div class="bar-track">
-            <div class="bar-fill {{ label|lower|replace(' ','') }}"
-                 style="--w: {{ '%.2f'|format(pct) }}%;"></div>
+          <div class="progress-bar">
+            <!-- NOTE: pass percent as data attribute (no inline CSS Jinja) -->
+            <div class="progress-fill {{ label|lower|replace(' ','') }}"
+                 data-pct="{{ '%.2f'|format(pct) }}"></div>
           </div>
           <span class="percentage">{{ '%.0f'|format(pct) }}%</span>
         </div>
@@ -50,10 +57,10 @@
   <div class="card-header">
     <h2 class="section-title">Recent Activity</h2>
     {% if rows|length > 0 %}
-    <a href="{{ url_for('applications.list_applications') }}" class="header-link">View all</a>
+      <a href="{{ url_for('applications.list_applications') }}" class="header-link">View all</a>
     {% endif %}
   </div>
-  
+
   {% if rows|length == 0 %}
     <div class="empty-state">
       <h3>No applications yet</h3>
@@ -80,5 +87,15 @@
   <a href="{{ url_for('applications.list_applications') }}" class="btn">My Applications</a>
   <a href="{{ url_for('applications.new') }}" class="btn-outline">Add New</a>
 </div>
+
+<!-- Set progress widths from data-pct (prevents CSS-linter errors) -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.progress-fill[data-pct]').forEach(el => {
+      const pct = parseFloat(el.dataset.pct || '0') || 0;
+      el.style.width = pct + '%';
+    });
+  });
+</script>
 
 {% endblock %}
