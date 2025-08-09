@@ -1,29 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Hero Section -->
-<div class="hero">
-  <div class="hero-content">
-    <h1 class="app-name">Interviewly</h1>
-    <div class="accent"></div>
-    <p class="subtitle">Track your job applications and interviews in one place</p>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <span class="stat-number">{{ counts['Accepted'] }}</span>
-        <span class="stat-label">Offers</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{{ counts['Interview'] }}</span>
-        <span class="stat-label">Interviews</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{{ total }}</span>
-        <span class="stat-label">Total</span>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Dashboard Tiles -->
 <div class="tiles-row">
   <a href="{{ url_for('applications.list_applications') }}" class="tile tile-dark1">
