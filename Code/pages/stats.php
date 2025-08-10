@@ -1,16 +1,35 @@
-{% extends "base.html" %}
-{% block content %}
+<?php
+// pages/stats.php
+
+// Expected from controller: $labels (array), $data (array of counts), $total (int).
+// Provide safe defaults so the page still renders if they’re missing.
+$labels = $labels ?? ['Pending','Interview','Accepted','Rejected','No Answer'];
+$data   = $data   ?? array_fill(0, count($labels), 0);
+$total  = $total  ?? array_sum($data);
+
+function je($v): string {
+  // JSON encode for embedding into data-* attributes safely
+  return htmlspecialchars(
+    json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ENT_QUOTES,
+    'UTF-8'
+  );
+}
+
+$title = 'Stats';
+ob_start();
+?>
 
 <div class="card" style="text-align:center">
   <div class="text-xl font-bold" style="font-weight:700; margin-bottom:12px;">Application Status</div>
 
-  {% if total == 0 %}
+  <?php if ((int)$total === 0): ?>
     <div class="muted">No data yet — add an application to see stats.</div>
-  {% else %}
+  <?php else: ?>
     <!-- put data in data-* so JS stays clean -->
     <div id="stats-data"
-         data-labels='{{ labels|tojson|safe }}'
-         data-values='{{ data|tojson|safe }}'></div>
+         data-labels='<?= je($labels) ?>'
+         data-values='<?= je($data) ?>'></div>
 
     <!-- Bar -->
     <div style="max-width:980px; margin-inline:auto; margin-bottom:12px;">
@@ -21,16 +40,16 @@
     <div style="max-width:680px; margin-inline:auto;">
       <canvas id="pieChart" height="260"></canvas>
     </div>
-  {% endif %}
+  <?php endif; ?>
 </div>
 
-{% if total > 0 %}
+<?php if ((int)$total > 0): ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-  // read JSON safely (no Jinja in JS)
+  // read JSON safely (no PHP in JS)
   const el = document.getElementById('stats-data');
-  const LABELS = JSON.parse(el.dataset.labels);
-  const DATA   = JSON.parse(el.dataset.values);
+  const LABELS = JSON.parse(el.dataset.labels || "[]");
+  const DATA   = JSON.parse(el.dataset.values || "[]");
 
   const COLORS = {
     primary: "#2563eb",
@@ -64,20 +83,38 @@
   // Bar
   new Chart(document.getElementById("barChart"), {
     type: "bar",
-    data: { labels: LABELS, datasets: [{ data: DATA, backgroundColor: LABELS.map(l => STATUS_COLOR[l]), borderRadius: 6 }] },
+    data: {
+      labels: LABELS,
+      datasets: [{
+        data: DATA,
+        backgroundColor: LABELS.map(l => STATUS_COLOR[l]),
+        borderRadius: 6
+      }]
+    },
     options: commonOptions
   });
 
   // Pie
   new Chart(document.getElementById("pieChart"), {
     type: "pie",
-    data: { labels: LABELS, datasets: [{ data: DATA, backgroundColor: LABELS.map(l => STATUS_COLOR[l]), borderWidth: 0 }] },
+    data: {
+      labels: LABELS,
+      datasets: [{
+        data: DATA,
+        backgroundColor: LABELS.map(l => STATUS_COLOR[l]),
+        borderWidth: 0
+      }]
+    },
     options: {
       responsive: true,
-      plugins: { legend: { position: "bottom", labels: { color: COLORS.text, boxWidth: 14, padding: 12 } } }
+      plugins: {
+        legend: { position: "bottom", labels: { color: COLORS.text, boxWidth: 14, padding: 12 } }
+      }
     }
   });
 </script>
-{% endif %}
+<?php endif; ?>
 
-{% endblock %}
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/../base.php';

@@ -1,9 +1,33 @@
-{% extends "base.html" %}
-{% block content %}
+<?php
+// pages/applications.php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+// --- helpers ---
+function url_for(string $name, array $params = []): string {
+    $map = [
+        'applications.new'          => '/pages/new.php',
+        'applications.list_applications' => '/pages/applications.php',
+        'applications.set_status'   => '/pages/set_status.php',
+    ];
+    $path = $map[$name] ?? '#';
+    if ($params) {
+        $q = http_build_query($params);
+        $path .= (str_contains($path, '?') ? '&' : '?') . $q;
+    }
+    return $path;
+}
+function v($row, $key) { return is_array($row) ? ($row[$key] ?? '') : ($row->$key ?? ''); }
+
+// --- expected data (safe default if not injected) ---
+$rows = $rows ?? [];   // array of rows with: id, position, company, status
+
+$title = 'Applications';
+ob_start();
+?>
 
 <!-- Add button -->
 <div class="list-header">
-  <a href="{{ url_for('applications.new') }}" class="add-btn">
+  <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
     <span class="add-btn-icon">+</span>
     <span class="add-btn-text">Add Application</span>
   </a>
@@ -11,30 +35,33 @@
 
 <!-- Application List -->
 <div class="list">
-  {% for r in rows %}
+  <?php foreach ($rows as $r): ?>
   <div class="card">
-    <div class="title">{{ r.position }}</div>
-    <a class="company" href="/companies/{{ r.company|urlencode }}">{{ r.company }}</a>
+    <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
+    <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
+      <?= htmlspecialchars(v($r, 'company')) ?>
+    </a>
 
     <div class="status-container">
       <span class="status-label">Status:</span>
 
       <!-- Trigger -->
+      <?php $status = (string) v($r, 'status'); ?>
       <button
-        class="status-pill {{ r.status|lower|replace(' ','') }}"
+        class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
         type="button"
-        onclick="openStatusMenu('{{ r.id }}', this, event)">
-        {{ r.status }} <span class="dropdown-arrow">▼</span>
+        onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
+        <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
       </button>
     </div>
 
     <!-- Hidden form to submit status change -->
-    <form id="form-{{ r.id }}" method="post"
-          action="{{ url_for('applications.set_status', app_id=r.id) }}">
-      <input type="hidden" name="status" value="{{ r.status }}">
+    <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
+          action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
+      <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
     </form>
   </div>
-  {% endfor %}
+  <?php endforeach; ?>
 </div>
 
 <!-- Floating status menu (one instance only) -->
@@ -95,4 +122,7 @@
   });
 </script>
 
-{% endblock %}
+<?php
+$content = ob_get_clean();
+require_once __DIR__ . '/../includes/base.php';
+
