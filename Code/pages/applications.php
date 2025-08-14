@@ -64,7 +64,6 @@ $title = 'Applications';
 ob_start();
 ?>
 
-<!-- Page styles only; theme stays the same -->
 <style>
   :root{
     --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#3b82f6;
@@ -82,14 +81,16 @@ ob_start();
     padding: 14px;
     margin-bottom: 16px;
   }
-  .page-title{ margin:0; font-size:1.2rem; font-weight:800; letter-spacing:.2px }
+  .page-title{ margin:0; font-size:1.4rem; font-weight:800; letter-spacing:.2px }
 
+  /* Filter chips */
   .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
   .chip{
     display:inline-flex; align-items:center; gap:8px;
-    padding:6px 10px; border-radius: 999px; font-weight:700; font-size:.9rem;
+    padding:6px 10px; border-radius: 999px; font-weight:700; font-size:.95rem;
     border:1px solid var(--border); color:#cbd5e1; background: rgba(255,255,255,.02);
     transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    white-space: nowrap;
   }
   .chip:hover{ transform: translateY(-1px); background: rgba(255,255,255,.04); }
   .chip.active{
@@ -98,27 +99,44 @@ ob_start();
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 6px 18px rgba(37,99,235,.18);
   }
 
-  .head-actions{
-    display:flex; gap: 12px; align-items:center; margin-top: 12px; flex-wrap: wrap;
-  }
-  .search-wrap{
-    flex:1 1 360px;
-    display:flex; gap:8px; align-items:center;
-    padding:6px; border:1px solid var(--border); border-radius: 12px;
-    background: rgba(255,255,255,.02);
+  /* Search + Add actions */
+  .head-actions{ display:flex; gap: 12px; align-items:center; margin-top: 12px; flex-wrap: wrap; }
+
+  .search-group{
+    position: relative;
+    flex: 1 1 360px;
+    min-width: 220px;
   }
   .search-input{
-    flex:1; background:transparent; border:0; outline:none; color:var(--text);
-    padding: 6px 8px;
+    width: 100%;
+    background: rgba(255,255,255,.02);
+    border:1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 12px 94px 12px 12px; /* space for the button on the right */
+    font-size: 16px;              /* prevents iOS zoom on focus */
+    line-height: 1.2;
+    outline: none;
   }
-  .search-btn, .clear-btn{
-    padding:8px 12px; border-radius: 999px; border:0; cursor:pointer; font-weight:700;
-    transition: transform .18s ease, filter .18s ease;
+  .search-input:focus{ box-shadow: 0 0 0 3px var(--ring); }
+
+  .search-btn{
+    position: absolute; right: 6px; top: 6px; bottom: 6px;
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width: 78px; height: auto;
+    padding: 0 12px;
+    border-radius: 10px; border:0;
+    background: var(--primary); color:#fff; font-weight:800;
+    cursor: pointer;
+    transition: transform .15s ease, filter .15s ease;
   }
-  .search-btn{ background: var(--primary); color:#fff }
   .search-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
-  .clear-btn{ background:#334155; color:#fff; text-decoration:none }
-  .clear-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+
+  /* Make the search button smaller on phones */
+  @media (max-width: 600px){
+    .search-input{ padding: 10px 78px 10px 10px; font-size: 15px; }
+    .search-btn{ min-width: 64px; padding: 0 10px; border-radius: 9px; font-size: .9rem; }
+  }
 
   .add-btn{
     display:inline-flex; align-items:center; gap:10px; white-space:nowrap;
@@ -130,10 +148,12 @@ ob_start();
   }
   .add-btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 22px rgba(37,99,235,.32); }
   .add-btn-icon{ font-size:1.2rem; }
+  @media (max-width: 860px){ .add-btn{ width:100%; justify-content:center; } }
 
+  /* List & cards */
   .list{ display:grid; gap: 12px; margin-top: 8px; }
   .card{
-    position:relative; /* keep cards relative */
+    position:relative;
     border:1px solid var(--border); border-radius: var(--radius);
     background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
     box-shadow: var(--shadow-sm);
@@ -141,16 +161,14 @@ ob_start();
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
   }
   .card:hover{ transform: translateY(-2px); border-color: rgba(37,99,235,.35); box-shadow: var(--shadow-lg); }
-  .card[data-anim]{ opacity:0; transform: translateY(8px); }
-  .card.in{ opacity:1; transform:none; transition: opacity .45s ease, transform .45s ease; }
-
   .title{ font-weight:800; font-size:1.05rem; margin-bottom:4px }
   .company{ color: var(--muted); display:inline-flex; align-items:center; gap:6px; }
   .company:hover{ color: var(--primary-light); }
+
   .status-container{ display:flex; align-items:center; gap:10px; margin-top: 12px }
   .status-label{ color: var(--muted); font-size: .9rem; }
 
-  /* Pill colors (already in your theme; restated for clarity) */
+  /* Status pills */
   .status-pill{ border:0; border-radius: 999px; padding: 6px 12px; font-weight:700; color:#fff; cursor:pointer; }
   .status-pill.pending{ background:#3b82f6; }
   .status-pill.interview{ background:#f59e0b; }
@@ -159,20 +177,19 @@ ob_start();
   .status-pill.noanswer{ background:#64748b; }
   .dropdown-arrow{ font-size:12px; margin-left:6px; }
 
-  /* The ONLY important change: anchor menu to BODY via absolute positioning */
+  /* Menu (fixed to viewport & clamped) */
   .floating-menu{
-    position: absolute; /* absolute to BODY (we'll move it there in JS) */
-    top: 0; left: 0;
-    z-index: 10000;
+    position: fixed;
+    z-index: 9999;
     display:none;
-    min-width:180px; padding:6px;
-    background: var(--bg-light); border:1px solid var(--border); border-radius: 12px;
+    min-width:180px;
+    padding:6px;
+    background: var(--bg-light);
+    border:1px solid var(--border);
+    border-radius: 12px;
     box-shadow: var(--shadow-lg);
-    animation: pop .12s ease both;
   }
   .floating-menu.show{ display:block; }
-  @keyframes pop{ from{ transform:translateY(-4px); opacity:0 } to{ transform:none; opacity:1 } }
-
   .status-option{
     display:block; width:100%; margin:0 0 6px 0; padding:8px 12px; border:0; border-radius: 10px;
     font-weight:700; text-align:left; color:#fff; cursor:pointer;
@@ -189,11 +206,6 @@ ob_start();
   .empty-state{ text-align:center; padding: 40px 10px; }
   .empty-state h3{ margin:0 0 6px 0; }
   .empty-state .muted{ color: var(--muted); margin-bottom: 16px; }
-
-  @media (max-width: 860px){
-    .head-actions{ flex-direction: column; align-items: stretch; }
-    .add-btn{ width:100%; justify-content:center; }
-  }
 </style>
 
 <!-- Header -->
@@ -220,20 +232,16 @@ ob_start();
   </div>
 
   <div class="head-actions">
-    <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-wrap">
+    <!-- Compact search group -->
+    <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-group" role="search">
       <input class="search-input" type="text" name="q" placeholder="Search company or position"
-             value="<?= htmlspecialchars($q) ?>" aria-label="Search">
-      <?php if ($filter): ?>
-        <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-      <?php endif; ?>
+             value="<?= htmlspecialchars($q) ?>" aria-label="Search company or position" inputmode="search" />
+      <?php if ($filter): ?><input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>"><?php endif; ?>
       <button class="search-btn" type="submit">Search</button>
-      <?php if ($q || $filter): ?>
-        <a class="clear-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">Clear</a>
-      <?php endif; ?>
     </form>
 
     <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
-      <span class="add-btn-icon">+</span> Add Application
+      <span class="add-btn-icon">＋</span> Add Application
     </a>
   </div>
 </div>
@@ -250,15 +258,15 @@ ob_start();
     <div class="card">
       <div class="empty-state">
         <h3>No applications found</h3>
-        <div class="muted">Try adding one or adjust your search or filter.</div>
+        <div class="muted">Try adding one or adjust your search/filter.</div>
         <a class="add-btn" href="<?= htmlspecialchars(url_for('applications.new')) ?>">
-          <span class="add-btn-icon">+</span> Add Application
+          <span class="add-btn-icon">＋</span> Add Application
         </a>
       </div>
     </div>
   <?php else: ?>
     <?php foreach ($rows as $r): ?>
-      <div class="card" data-anim>
+      <div class="card">
         <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
         <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
           <?= htmlspecialchars(v($r, 'company')) ?>
@@ -275,7 +283,6 @@ ob_start();
           </button>
         </div>
 
-        <!-- Hidden form to submit status change -->
         <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
               action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
           <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
@@ -285,7 +292,7 @@ ob_start();
   <?php endif; ?>
 </div>
 
-<!-- Floating status menu (single instance) -->
+<!-- Floating status menu -->
 <div id="status-menu" class="floating-menu" role="menu" aria-hidden="true">
   <button type="button" class="status-option pending"   data-status="Pending">Pending</button>
   <button type="button" class="status-option interview" data-status="Interview">Interview</button>
@@ -295,12 +302,10 @@ ob_start();
 </div>
 
 <script>
-  // ---- Make sure the floating menu is attached to <body> so absolute coords work reliably ----
+  // Attach menu to body (safest on mobile), and position/clamp near the clicked pill
   (function(){
     const menu = document.getElementById('status-menu');
-    if (menu && menu.parentNode !== document.body) {
-      document.body.appendChild(menu);
-    }
+    if (menu && menu.parentNode !== document.body) document.body.appendChild(menu);
   })();
 
   let CURRENT_ID = null;
@@ -310,15 +315,23 @@ ob_start();
     CURRENT_ID = id;
 
     const menu = document.getElementById('status-menu');
-    const rect = btn.getBoundingClientRect();
+    const r = btn.getBoundingClientRect();
 
-    // Use page coordinates (viewport rect + scroll)
-    const x = window.scrollX + rect.left;
-    const y = window.scrollY + rect.bottom + 6;
+    // Show to measure
+    menu.style.visibility = 'hidden';
+    menu.classList.add('show');
+
+    const w = menu.offsetWidth;
+    const h = menu.offsetHeight;
+    const pad = 8;
+
+    // Clamp to viewport
+    const x = Math.max(pad, Math.min(r.left, window.innerWidth  - w - pad));
+    const y = Math.max(pad, Math.min(r.bottom + 6, window.innerHeight - h - pad));
 
     menu.style.left = x + 'px';
     menu.style.top  = y + 'px';
-    menu.classList.add('show');
+    menu.style.visibility = 'visible';
     menu.setAttribute('aria-hidden', 'false');
   }
 
@@ -346,18 +359,6 @@ ob_start();
   window.addEventListener('scroll', closeStatusMenu, { passive: true });
   window.addEventListener('resize', closeStatusMenu);
   document.getElementById('status-menu').addEventListener('click', e => e.stopPropagation());
-
-  // Reveal animation for cards (unchanged)
-  (function(){
-    const els = document.querySelectorAll('.card[data-anim]');
-    if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('in')); return; }
-    const io = new IntersectionObserver((entries, obs)=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); }
-      });
-    }, { threshold: .2 });
-    els.forEach(el => io.observe(el));
-  })();
 </script>
 
 <?php

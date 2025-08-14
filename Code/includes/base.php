@@ -40,10 +40,8 @@ if (!function_exists('is_active')) {
   }
 }
 
-/* ---- defaults ----
-   If the page already set $counts / $total, we keep them.
-   Otherwise, we compute per-user counts here (if logged in). */
-$counts  = $counts  ?? null;   // possibly set by the page
+/* ---- defaults (no changes to data logic) ---- */
+$counts  = $counts  ?? null;
 $total   = $total   ?? null;
 $title   = $title   ?? 'Interviewly - Job Application Tracker';
 $content = $content ?? '';
@@ -81,250 +79,125 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Important for mobile: ensures proper scaling and prevents zoom side‑effects -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="/static/images/icon2.png" />
-
-  <!-- Your base stylesheet -->
   <link rel="stylesheet" href="/static/css/style.css" />
 
-  <!-- Lightweight enhancements layered on top of your theme -->
+  <!-- Minimal, targeted CSS to keep nav links visible and usable on phones -->
   <style>
     :root{
-      /* Falls back if your theme doesn't define these */
-      --bg: #0b1220;
-      --card: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.1);
-      --text: #e8ecf3;
-      --muted: #9aa7bd;
-      --primary: #8B0000; /* your noted primary from DagangID theme, still looks great here */
-      --primary-500: var(--primary);
-      --primary-300: #ffb3b3;
-      --ring: rgba(255,255,255,0.18);
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
-      --radius: 14px;
-      --radius-sm: 10px;
-      --radius-lg: 18px;
+      /* use your theme tokens as fallbacks only */
+      --primary:#2563eb;
+      --primary-dark:#1d4ed8;
+      --muted:#9ca3af;
+      --text:#f8fafc;
+      --bg:#0f172a;
+      --border:#1e293b;
+      --radius:14px;
+      --radius-sm:10px;
     }
 
-    html, body {
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
+    html, body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    body { margin: 0; }
 
-    .container{
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    .container{ max-width:1100px; margin:0 auto; padding:16px; }
 
-    /* Header shell with subtle gradient + border */
     .combined-header{
-      position: relative;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background:
-        radial-gradient(1200px 500px at 10% -20%, rgba(139,0,0,0.25), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      box-shadow: var(--shadow);
-      overflow: clip;
-      animation: cardEnter 550ms ease-out both;
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(6px) saturate(115%);
+      -webkit-backdrop-filter: blur(6px) saturate(115%);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+      overflow: hidden;
     }
 
-    @keyframes cardEnter {
-      from { opacity: 0; transform: translateY(8px) scale(0.99); }
-      to   { opacity: 1; transform: translateY(0)   scale(1); }
-    }
-
-    /* Navigation */
     .main-nav{
-      display:flex; align-items:center; gap:16px;
-      padding: 16px 18px;
+      display:flex; align-items:center; gap:12px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
-      backdrop-filter: saturate(120%) blur(4px);
     }
+    .logo{ margin:0; font-weight:800; letter-spacing:.2px; font-size:1.6rem; }
+    .logo a{ display:inline-flex; align-items:center; gap:10px; color:inherit; text-decoration:none; }
+    .logo img{ height:26px; width:26px; }
 
-    .logo a{
-      display:inline-flex; align-items:center; gap:10px;
-      font-weight: 700; letter-spacing: 0.2px;
-    }
-
-    .logo img{
-      height: 28px;
-      width: 28px;
-      filter: drop-shadow(0 1px 6px rgba(139,0,0,0.4));
-      transform: translateZ(0);
-    }
-
+    /* NAV LINKS: ensure visible on mobile */
     .nav-links{
-      display:flex; gap: 8px;
-      margin-left: 6px;
+      display:flex; gap:8px; margin-left:6px;
+      flex-wrap: wrap;                       /* wraps to next line on narrow screens */
+      max-width: 100%;
+      overflow-x: auto;                      /* if long, allow horizontal scroll */
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;                 /* Firefox */
     }
+    .nav-links::-webkit-scrollbar{ display:none; } /* WebKit */
 
     .nav-link{
-      position: relative;
-      padding: 8px 12px;
-      border-radius: 10px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color .2s ease, background-color .2s ease, transform .2s ease;
+      padding:10px 12px; border-radius:10px; text-decoration:none;
+      font-weight:800; color: var(--muted);
+      transition: color .2s, background .2s, transform .2s;
+      white-space: nowrap;                   /* keep pills compact when scrolling */
     }
-
-    .nav-link:hover{ color: #fff; background: rgba(255,255,255,0.04); transform: translateY(-1px); }
-
+    .nav-link:hover{ color:#fff; background:rgba(255,255,255,.05); transform: translateY(-1px); }
     .nav-link.active{
-      color: #fff;
-      background: linear-gradient(180deg, rgba(139,0,0,0.25), rgba(139,0,0,0.15));
-      border: 1px solid rgba(139,0,0,0.35);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.04),
-        0 6px 18px rgba(139,0,0,0.18);
+      color:#fff; background: rgba(37,99,235,.18);
+      border:1px solid rgba(37,99,235,.35);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 8px 20px rgba(37,99,235,.22);
     }
 
+    .nav-auth{ margin-left:auto; display:flex; align-items:center; gap:10px; }
     .nav-auth .btn, .nav-auth .btn-outline{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 8px 12px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex; align-items:center; gap:8px; padding:10px 12px;
+      border-radius:10px; font-weight:800; text-decoration:none;
     }
+    .btn{ background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color:#fff; border:1px solid rgba(255,255,255,.06); }
+    .btn-outline{ color:#fff; background: rgba(255,255,255,.03); border:1px solid var(--border); }
+    .muted{ color:var(--muted); white-space:nowrap; }
 
-    .btn{
-      background: linear-gradient(180deg, var(--primary-500), #5a0000);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 10px 20px rgba(139,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.06);
-    }
-
-    .btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(139,0,0,0.3); }
-
-    .btn-outline{
-      border: 1px solid var(--border);
-      color: #fff; background: rgba(255,255,255,0.03);
-    }
-
-    .btn-outline:hover{ border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
-
-    .muted{ color: var(--muted); }
-
-    /* Hero */
     .hero-content{
-      padding: 26px 22px 28px;
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 16px;
-      align-items: center;
+      padding: 20px 16px;
+      display:grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items:center;
     }
-
-    .subtitle{
-      margin: 0 0 10px 0;
-      color: #eaeef7;
-      font-size: 1.05rem;
-      opacity: .95;
-      line-height: 1.45;
-      max-width: 60ch;
-      animation: fadeUp .6s ease-out both .05s;
-    }
-
-    @keyframes fadeUp{
-      from { opacity:0; transform: translateY(6px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-
-    .hero-stats{
-      display:flex; gap: 12px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
+    .subtitle{ margin:0; color:#e9efff; opacity:.95; font-size:1.05rem; line-height:1.45; }
+    .hero-stats{ display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap; }
     .stat-item{
-      min-width: 120px;
-      padding: 14px 16px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02));
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
-      animation: fadeUp .6s ease-out both .12s;
+      min-width:120px; padding: 14px 16px; border-radius: var(--radius-sm);
+      border:1px solid var(--border); background: rgba(255,255,255,.035);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
     }
+    .stat-number{ font-size:1.8rem; font-weight:800; line-height:1.1; display:block; }
+    .stat-label{ color: var(--muted); font-size:.9rem; }
 
-    .stat-item::after{
-      content:"";
-      position:absolute; inset:-1px;
-      border-radius: inherit;
-      background: conic-gradient(from 180deg at 50% 50%, rgba(139,0,0,0.15), transparent 40%, rgba(255,255,255,0.06) 60%, transparent 80%, rgba(139,0,0,0.15));
-      filter: blur(12px);
-      opacity:.35;
-      z-index:-1;
-      transition: opacity .25s ease;
-    }
-
-    .stat-item:hover{ transform: translateY(-2px); border-color: rgba(139,0,0,0.35); }
-
-    .stat-number{
-      font-size: 1.8rem; font-weight: 800;
-      letter-spacing: 0.3px;
-      display: block;
-      line-height: 1.1;
-    }
-
-    .stat-label{
-      color: var(--muted); font-size: .9rem;
-    }
-
-    /* Main content card */
     .main-content{
-      margin-top: 18px;
-      border: 1px solid var(--border);
+      margin-top: 16px;
+      border:1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      box-shadow: var(--shadow);
-      animation: cardEnter 500ms ease-out both .05s;
+      padding: 16px;
+      background: rgba(255,255,255,.03);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
     }
+    .main-footer{ text-align:center; color:var(--muted); padding:18px 10px 8px; font-size:.9rem; }
 
-    /* Footer */
-    .main-footer{
-      text-align: center;
-      color: var(--muted);
-      padding: 18px 10px 8px;
-      font-size: .9rem;
-      opacity: .85;
-    }
-
-    /* Focus styles for accessibility */
-    a, button, [role="button"]{
-      outline: none;
-    }
+    /* Accessibility focus */
     a:focus-visible, .btn:focus-visible, .btn-outline:focus-visible, .nav-link:focus-visible{
-      box-shadow: 0 0 0 3px var(--ring);
+      outline:none; box-shadow:0 0 0 3px rgba(37,99,235,.35);
     }
 
-    /* Mobile */
+    /* ===== Mobile tweaks ONLY (do NOT hide the links) ===== */
     @media (max-width: 800px){
-      .hero-content{
-        grid-template-columns: 1fr;
-      }
-      .hero-stats{
-        justify-content: flex-start;
-      }
-      .nav-links{
-        display:none; /* keeps header clean on small screens; feel free to swap to a burger later */
-      }
-      .logo img{ height:24px; width:24px; }
+      .main-nav{ flex-wrap: wrap; }                 /* allow nav to break into lines */
+      .logo{ font-size: 1.4rem; }
+      .hero-content{ grid-template-columns: 1fr; }  /* stack hero on phones */
+      .hero-stats{ justify-content:flex-start; }
+      .nav-auth{ width:100%; justify-content:flex-end; } /* auth row flows under links */
     }
 
-    /* Respect reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      *{ animation: none !important; transition: none !important; }
+    /* iOS safe-area padding at the bottom so content isn’t cropped by Safari bar */
+    @supports (padding: max(0px)) {
+      .container { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
   </style>
 </head>
@@ -333,12 +206,13 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     <header class="combined-header">
       <nav class="main-nav" aria-label="Primary">
         <h1 class="logo">
-          <a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">
+          <a href="<?= htmlspecialchars(url_for('home.home')) ?>">
             <img src="/static/images/icon2.png" alt="Interviewly logo">
             Interviewly
           </a>
         </h1>
 
+        <!-- Links are ALWAYS visible and wrap/scroll on small screens -->
         <div class="nav-links" role="navigation" aria-label="Sections">
           <a href="<?= htmlspecialchars(url_for('home.home')) ?>"
              class="nav-link <?= is_active('home.home') ? 'active' : '' ?>"
@@ -353,11 +227,9 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
              <?= is_active('stats.stats') ? 'aria-current="page"' : '' ?>>Stats</a>
         </div>
 
-        <div class="nav-auth" style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <div class="nav-auth">
           <?php if (!empty($me)): ?>
-            <span class="muted" style="white-space:nowrap;">
-              Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?>
-            </span>
+            <span class="muted">Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?></span>
             <a class="btn-outline" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
           <?php else: ?>
             <?php
@@ -370,20 +242,18 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       </nav>
 
       <div class="hero-content">
-        <p class="subtitle">
-          Track your job applications and interviews in one place
-        </p>
+        <p class="subtitle">Track your job applications and interviews in one place</p>
         <div class="hero-stats" aria-label="Quick stats">
           <div class="stat-item">
-            <span class="stat-number js-count" data-to="<?= (int)($counts['Accepted'] ?? 0) ?>">0</span>
+            <span class="stat-number"><?= (int)($counts['Accepted'] ?? 0) ?></span>
             <span class="stat-label">Offers</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number js-count" data-to="<?= (int)($counts['Interview'] ?? 0) ?>">0</span>
+            <span class="stat-number"><?= (int)($counts['Interview'] ?? 0) ?></span>
             <span class="stat-label">Interviews</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number js-count" data-to="<?= (int)$total ?>">0</span>
+            <span class="stat-number"><?= (int)$total ?></span>
             <span class="stat-label">Total</span>
           </div>
         </div>
@@ -398,51 +268,5 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       <p>&copy; <?= date('Y') ?> Interviewly. All rights reserved.</p>
     </footer>
   </div>
-
-  <!-- Tiny, dependency-free enhancements -->
-  <script>
-    (function(){
-      // Count-up for hero stats (respects reduced motion)
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) {
-        document.querySelectorAll('.js-count').forEach(el => {
-          el.textContent = el.getAttribute('data-to') || '0';
-        });
-        return;
-      }
-
-      const easeOut = t => 1 - Math.pow(1 - t, 3); // cubic easeOut
-      const dur = 900;
-
-      function countUp(el){
-        const end = parseInt(el.getAttribute('data-to') || '0', 10);
-        const start = 0;
-        const startTime = performance.now();
-
-        function frame(now){
-          const p = Math.min(1, (now - startTime) / dur);
-          const val = Math.round(start + (end - start) * easeOut(p));
-          el.textContent = val.toLocaleString();
-          if (p < 1) requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);
-      }
-
-      const items = document.querySelectorAll('.js-count');
-      // Trigger only when visible
-      const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries, obs)=>{
-        entries.forEach(e=>{
-          if(e.isIntersecting){
-            countUp(e.target);
-            obs.unobserve(e.target);
-          }
-        });
-      }, { threshold: 0.6 }) : null;
-
-      items.forEach(el=>{
-        if(io){ io.observe(el); } else { countUp(el); }
-      });
-    })();
-  </script>
 </body>
 </html>

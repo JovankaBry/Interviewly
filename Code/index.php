@@ -6,9 +6,9 @@ error_reporting(E_ALL);
 /* ---------- auth + db ---------- */
 require_once __DIR__ . '/auth/auth.php';
 require_login();
-$uid = current_user_id();          // <- use this in queries
+$uid = current_user_id();
 
-require_once __DIR__ . '/api/db.php'; // provides $pdo
+require_once __DIR__ . '/api/db.php';
 
 /* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
@@ -30,7 +30,7 @@ function v($row, $key) {
     return is_array($row) ? ($row[$key] ?? '') : ($row->$key ?? '');
 }
 
-/* ---------- fetch recent rows (for activity) ---------- */
+/* ---------- fetch recent rows (limit 5) ---------- */
 $rows = [];
 try {
     $stmt = $pdo->prepare("
@@ -46,7 +46,7 @@ try {
     error_log('Index fetch rows error: ' . $e->getMessage());
 }
 
-/* ---------- fetch counts by status (scoped to user) ---------- */
+/* ---------- fetch counts ---------- */
 $counts = ['Pending'=>0,'Interview'=>0,'Accepted'=>0,'Rejected'=>0,'No Answer'=>0];
 try {
     $stmt = $pdo->prepare("
@@ -70,12 +70,30 @@ $title = 'Home';
 ob_start();
 ?>
 
-<!-- Page-only tweaks: increase vertical space before the status card -->
 <style>
-  /* Add more breathing room between the top tiles and the status card */
-  .status-card { margin-top: calc(var(--gap) * 1); } /* adjust 2.2 → 1.8–3 as you like */
-  /* Optional: also add extra gap after tiles row if you prefer that approach */
-  /* .tiles-row { margin-bottom: calc(var(--gap) * 2.2); } */
+  /* Match tiles background to .card style */
+  .tiles-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--gap);
+    margin-bottom: calc(var(--gap) * 1.6);
+  }
+
+  .tiles-row .tile {
+    background-color: var(--card-bg, #0f1623) !important; /* same as cards */
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    box-shadow: var(--shadow-1, 0 6px 20px rgba(0,0,0,0.35));
+    padding: 16px;
+  }
+
+  .tiles-row .tile-dark1,
+  .tiles-row .tile-dark2 {
+    background-color: var(--card-bg, #0f1623) !important;
+    background-image: none !important;
+  }
+
+  .status-card { margin-top: calc(var(--gap) * 1.6); }
 </style>
 
 <!-- Dashboard Tiles -->
@@ -176,5 +194,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-/* base.php uses $title, $counts, $total, $content */
 include __DIR__ . '/includes/base.php';
