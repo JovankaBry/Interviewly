@@ -70,6 +70,14 @@ $title = 'Home';
 ob_start();
 ?>
 
+<!-- Page-only tweaks: increase vertical space before the status card -->
+<style>
+  /* Add more breathing room between the top tiles and the status card */
+  .status-card { margin-top: calc(var(--gap) * 1); } /* adjust 2.2 → 1.8–3 as you like */
+  /* Optional: also add extra gap after tiles row if you prefer that approach */
+  /* .tiles-row { margin-bottom: calc(var(--gap) * 2.2); } */
+</style>
+
 <!-- Dashboard Tiles -->
 <div class="tiles-row">
   <a href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="tile tile-dark1">
