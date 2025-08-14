@@ -2,13 +2,17 @@
 // pages/applications.php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-// --- helpers ---
+
+/* ---------- DB connection (PDO) ---------- */
+require_once __DIR__ . '/../api/db.php'; // provides $pdo
+
+/* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
     $map = [
         'home.home'                      => '/index.php',
-        'applications.new'          => '/pages/new.php',
+        'applications.new'               => '/pages/new.php',
         'applications.list_applications' => '/pages/applications.php',
-        'applications.set_status'   => '/pages/set_status.php',
+        'applications.set_status'        => '/pages/set_status.php',
         'stats.stats'                    => '/pages/stats.php',
     ];
     $path = $map[$name] ?? '#';
@@ -20,50 +24,107 @@ function url_for(string $name, array $params = []): string {
 }
 function v($row, $key) { return is_array($row) ? ($row[$key] ?? '') : ($row->$key ?? ''); }
 
-// --- expected data (safe default if not injected) ---
-$rows = $rows ?? [];   // array of rows with: id, position, company, status
+/* ---------- inputs: filter + search (optional) ---------- */
+$validStatuses = ['Pending','Interview','Accepted','Rejected','No Answer'];
+$filter = isset($_GET['filter']) && in_array($_GET['filter'], $validStatuses, true) ? $_GET['filter'] : null;
+$q      = trim($_GET['q'] ?? '');
 
+/* ---------- fetch rows from DB ---------- */
+$rows = [];
+try {
+    $sql = "SELECT id, company, position, status
+            FROM applications";
+    $where = [];
+    $params = [];
+
+    if ($filter) {
+        $where[] = "status = :status";
+        $params[':status'] = $filter;
+    }
+    if ($q !== '') {
+        $where[] = "(company LIKE :q OR position LIKE :q)";
+        $params[':q'] = "%{$q}%";
+    }
+    if ($where) {
+        $sql .= " WHERE " . implode(" AND ", $where);
+    }
+    $sql .= " ORDER BY created_at DESC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    // show a friendly warning in the list
+    $rows = [];
+    $load_error = 'Could not load applications: ' . $e->getMessage();
+}
+
+/* ---------- page ---------- */
 $title = 'Applications';
 ob_start();
 ?>
 
-<!-- Add button -->
+<!-- Add button + (optional) search + filter badge -->
 <div class="list-header">
   <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
     <span class="add-btn-icon">+</span>
     <span class="add-btn-text">Add Application</span>
   </a>
+
+  <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-wrap">
+    <input class="search-input" type="text" name="q" placeholder="Search company or position"
+           value="<?= htmlspecialchars($q) ?>">
+    <?php if ($filter): ?>
+      <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+    <?php endif; ?>
+    <button class="search-btn" type="submit">Search</button>
+    <?php if ($q || $filter): ?>
+      <a class="clear-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">Clear</a>
+    <?php endif; ?>
+  </form>
 </div>
+
+<?php if (!empty($load_error)): ?>
+  <div class="card" style="background:#2b2b2b;color:#ffb4b4;padding:12px;border-radius:8px;margin:10px 0;">
+    <?= htmlspecialchars($load_error) ?>
+  </div>
+<?php endif; ?>
 
 <!-- Application List -->
 <div class="list">
-  <?php foreach ($rows as $r): ?>
-  <div class="card">
-    <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
-    <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
-      <?= htmlspecialchars(v($r, 'company')) ?>
-    </a>
-
-    <div class="status-container">
-      <span class="status-label">Status:</span>
-
-      <!-- Trigger -->
-      <?php $status = (string) v($r, 'status'); ?>
-      <button
-        class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
-        type="button"
-        onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
-        <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
-      </button>
+  <?php if (!$rows): ?>
+    <div class="card">
+      <div class="title">No applications found</div>
+      <div class="company">Try adding one or adjust your search/filter.</div>
     </div>
+  <?php else: ?>
+    <?php foreach ($rows as $r): ?>
+    <div class="card">
+      <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
+      <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
+        <?= htmlspecialchars(v($r, 'company')) ?>
+      </a>
 
-    <!-- Hidden form to submit status change -->
-    <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
-          action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
-      <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
-    </form>
-  </div>
-  <?php endforeach; ?>
+      <div class="status-container">
+        <span class="status-label">Status:</span>
+
+        <?php $status = (string) v($r, 'status'); ?>
+        <button
+          class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
+          type="button"
+          onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
+          <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
+        </button>
+      </div>
+
+      <!-- Hidden form to submit status change -->
+      <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
+            action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
+        <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+      </form>
+    </div>
+    <?php endforeach; ?>
+  <?php endif; ?>
 </div>
 
 <!-- Floating status menu (one instance only) -->
@@ -85,13 +146,11 @@ ob_start();
     const menu = document.getElementById('status-menu');
     const rect = btn.getBoundingClientRect();
 
-    // position menu just under the button
     menu.style.left = (window.scrollX + rect.left) + 'px';
     menu.style.top  = (window.scrollY + rect.bottom + 6) + 'px';
     menu.classList.add('show');
     menu.setAttribute('aria-hidden', 'false');
   }
-
   function closeStatusMenu() {
     const menu = document.getElementById('status-menu');
     menu.classList.remove('show');
@@ -99,7 +158,6 @@ ob_start();
     CURRENT_ID = null;
   }
 
-  // click on an option => submit hidden form
   document.getElementById('status-menu').addEventListener('click', function (e) {
     const btn = e.target.closest('.status-option');
     if (!btn || !CURRENT_ID) return;
@@ -113,18 +171,25 @@ ob_start();
     form.submit();
   });
 
-  // close on outside click / scroll / resize
   document.addEventListener('click', closeStatusMenu);
   window.addEventListener('scroll', closeStatusMenu, { passive: true });
   window.addEventListener('resize', closeStatusMenu);
-
-  // prevent clicks inside menu from bubbling to document
-  document.getElementById('status-menu').addEventListener('click', function (e) {
-    e.stopPropagation();
-  });
+  document.getElementById('status-menu').addEventListener('click', e => e.stopPropagation());
 </script>
+
+<style>
+/* small styling add-ons for the search bar (matches your dark theme) */
+.search-wrap{ display:flex; gap:8px; align-items:center; margin-left:auto }
+.search-input{
+  background:transparent; border:1px solid #1e293b; border-radius:10px; padding:8px 10px; color:#f8fafc;
+}
+.search-btn,.clear-btn{
+  border:0; padding:8px 12px; border-radius:999px; text-decoration:none; cursor:pointer;
+  background:#2563eb; color:#000; font-weight:600;
+}
+.clear-btn{ background:#334155; color:#f8fafc }
+</style>
 
 <?php
 $content = ob_get_clean();
 require_once __DIR__ . '/../includes/base.php';
-

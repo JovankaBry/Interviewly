@@ -2,14 +2,40 @@
 // pages/stats.php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-// Expected from controller: $labels (array), $data (array of counts), $total (int).
-// Provide safe defaults so the page still renders if they’re missing.
-$labels = $labels ?? ['Pending','Interview','Accepted','Rejected','No Answer'];
-$data   = $data   ?? array_fill(0, count($labels), 0);
-$total  = $total  ?? array_sum($data);
 
+/* ---------- DB connection (PDO) ---------- */
+require_once __DIR__ . '/../api/db.php'; // provides $pdo
+
+/* ---------- fetch counts from DB ---------- */
+// We keep these 5 labels fixed to match your enum.
+$labels = ['Pending','Interview','Accepted','Rejected','No Answer'];
+$data   = array_fill(0, count($labels), 0);
+
+try {
+    $stmt = $pdo->query("
+        SELECT status, COUNT(*) AS c
+        FROM applications
+        GROUP BY status
+    ");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // map DB results into $data using fixed label order
+    $index = array_flip($labels);
+    foreach ($rows as $r) {
+        $s = $r['status'] ?? '';
+        if (isset($index[$s])) {
+            $data[$index[$s]] = (int)$r['c'];
+        }
+    }
+} catch (Throwable $e) {
+    // If DB fails, keep zeros and show a soft note.
+    $load_error = 'Could not load stats: ' . $e->getMessage();
+}
+
+$total = array_sum($data);
+
+/* ---------- helper ---------- */
 function je($v): string {
-  // JSON encode for embedding into data-* attributes safely
   return htmlspecialchars(
     json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
@@ -17,6 +43,7 @@ function je($v): string {
   );
 }
 
+/* ---------- page ---------- */
 $title = 'Stats';
 ob_start();
 ?>
@@ -24,10 +51,13 @@ ob_start();
 <div class="card" style="text-align:center">
   <div class="text-xl font-bold" style="font-weight:700; margin-bottom:12px;">Application Status</div>
 
+  <?php if (!empty($load_error)): ?>
+    <div class="muted" style="color:#ffb4b4;margin-bottom:10px;"><?= htmlspecialchars($load_error) ?></div>
+  <?php endif; ?>
+
   <?php if ((int)$total === 0): ?>
     <div class="muted">No data yet — add an application to see stats.</div>
   <?php else: ?>
-    <!-- put data in data-* so JS stays clean -->
     <div id="stats-data"
          data-labels='<?= je($labels) ?>'
          data-values='<?= je($data) ?>'></div>
@@ -47,7 +77,6 @@ ob_start();
 <?php if ((int)$total > 0): ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-  // read JSON safely (no PHP in JS)
   const el = document.getElementById('stats-data');
   const LABELS = JSON.parse(el.dataset.labels || "[]");
   const DATA   = JSON.parse(el.dataset.values || "[]");
@@ -62,7 +91,6 @@ ob_start();
     grid:    "#1f2937",
     bg:      "#0f172a"
   };
-
   const STATUS_COLOR = {
     "Pending":   COLORS.primary,
     "Interview": COLORS.warn,
@@ -81,37 +109,22 @@ ob_start();
     }
   };
 
-  // Bar
   new Chart(document.getElementById("barChart"), {
     type: "bar",
     data: {
       labels: LABELS,
-      datasets: [{
-        data: DATA,
-        backgroundColor: LABELS.map(l => STATUS_COLOR[l]),
-        borderRadius: 6
-      }]
+      datasets: [{ data: DATA, backgroundColor: LABELS.map(l => STATUS_COLOR[l]), borderRadius: 6 }]
     },
     options: commonOptions
   });
 
-  // Pie
   new Chart(document.getElementById("pieChart"), {
     type: "pie",
     data: {
       labels: LABELS,
-      datasets: [{
-        data: DATA,
-        backgroundColor: LABELS.map(l => STATUS_COLOR[l]),
-        borderWidth: 0
-      }]
+      datasets: [{ data: DATA, backgroundColor: LABELS.map(l => STATUS_COLOR[l]), borderWidth: 0 }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "bottom", labels: { color: COLORS.text, boxWidth: 14, padding: 12 } }
-      }
-    }
+    options: { responsive: true, plugins: { legend: { position: "bottom", labels: { color: COLORS.text, boxWidth: 14, padding: 12 } } } }
   });
 </script>
 <?php endif; ?>
