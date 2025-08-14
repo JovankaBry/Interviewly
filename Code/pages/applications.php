@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 // --- helpers ---
 function url_for(string $name, array $params = []): string {
     $map = [
+        'home.home'                      => '/index.php',
         'applications.new'          => '/pages/new.php',
         'applications.list_applications' => '/pages/applications.php',
         'applications.set_status'   => '/pages/set_status.php',
