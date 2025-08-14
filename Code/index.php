@@ -11,6 +11,8 @@ function url_for(string $name, array $params = []): string {
         'applications.list_applications' => '/pages/applications.php',
         'applications.new'               => '/pages/new.php',
         'stats.stats'                    => '/pages/stats.php',
+        'auth.login'                     => '/auth/login.php',
+        'auth.logout'                    => '/auth/logout.php',
     ];
     $path = $map[$name] ?? '#';
     if ($params) {

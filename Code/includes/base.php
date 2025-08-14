@@ -1,13 +1,23 @@
 <?php
 // includes/base.php
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// start/read session (for login state)
+require_once __DIR__ . '/../api/session.php';
+
+// ---- helpers ----
 if (!function_exists('url_for')) {
   function url_for(string $name, array $params = []): string {
       $map = [
           'home.home'                      => '/index.php',
           'applications.list_applications' => '/pages/applications.php',
           'applications.new'               => '/pages/new.php',
+          'applications.set_status'        => '/pages/set_status.php',
           'stats.stats'                    => '/pages/stats.php',
+          'auth.login'                     => '/auth/login.php',
+          'auth.logout'                    => '/auth/logout.php',
       ];
       $path = $map[$name] ?? '#';
       if ($params) {
@@ -27,10 +37,14 @@ if (!function_exists('is_active')) {
   }
 }
 
-$counts = $counts ?? ['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0];
-$total  = $total  ?? array_sum($counts);
-$title  = $title  ?? 'Interviewly - Job Application Tracker';
+// ---- safe defaults for template variables ----
+$counts  = $counts  ?? ['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0];
+$total   = $total   ?? array_sum($counts);
+$title   = $title   ?? 'Interviewly - Job Application Tracker';
 $content = $content ?? '';
+
+// current user (if logged in)
+$me = $_SESSION['user'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,24 +58,58 @@ $content = $content ?? '';
   <div class="container">
     <header class="combined-header">
       <nav class="main-nav">
-        <h1 class="logo">Interviewly</h1>
+        <h1 class="logo"><a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">Interviewly</a></h1>
+
         <div class="nav-links">
-          <a href="<?= htmlspecialchars(url_for('home.home')) ?>" class="nav-link <?= is_active('home.home') ? 'active' : '' ?>">Home</a>
-          <a href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="nav-link <?= is_active('applications.list_applications') ? 'active' : '' ?>">Applications</a>
-          <a href="<?= htmlspecialchars(url_for('stats.stats')) ?>" class="nav-link <?= is_active('stats.stats') ? 'active' : '' ?>">Stats</a>
+          <a href="<?= htmlspecialchars(url_for('home.home')) ?>"
+             class="nav-link <?= is_active('home.home') ? 'active' : '' ?>">Home</a>
+
+          <a href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>"
+             class="nav-link <?= is_active('applications.list_applications') ? 'active' : '' ?>">Applications</a>
+
+          <a href="<?= htmlspecialchars(url_for('stats.stats')) ?>"
+             class="nav-link <?= is_active('stats.stats') ? 'active' : '' ?>">Stats</a>
+        </div>
+
+        <div class="nav-auth" style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+          <?php if ($me): ?>
+            <span class="muted" style="white-space:nowrap;">
+              Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?>
+            </span>
+            <a class="btn-outline" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
+          <?php else: ?>
+            <?php
+              // keep `next` so user returns to current page after login
+              $next = $_SERVER['REQUEST_URI'] ?? '/index.php';
+              $loginUrl = url_for('auth.login', ['next' => $next]);
+            ?>
+            <a class="btn" href="<?= htmlspecialchars($loginUrl) ?>">Login</a>
+          <?php endif; ?>
         </div>
       </nav>
+
       <div class="hero-content">
         <p class="subtitle">Track your job applications and interviews in one place</p>
         <div class="hero-stats">
-          <div class="stat-item"><span class="stat-number"><?= (int)($counts['Accepted'] ?? 0) ?></span><span class="stat-label">Offers</span></div>
-          <div class="stat-item"><span class="stat-number"><?= (int)($counts['Interview'] ?? 0) ?></span><span class="stat-label">Interviews</span></div>
-          <div class="stat-item"><span class="stat-number"><?= (int)$total ?></span><span class="stat-label">Total</span></div>
+          <div class="stat-item">
+            <span class="stat-number"><?= (int)($counts['Accepted'] ?? 0) ?></span>
+            <span class="stat-label">Offers</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number"><?= (int)($counts['Interview'] ?? 0) ?></span>
+            <span class="stat-label">Interviews</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number"><?= (int)$total ?></span>
+            <span class="stat-label">Total</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <main class="main-content"><?= $content ?></main>
+    <main class="main-content">
+      <?= $content ?>
+    </main>
 
     <footer class="main-footer">
       <p>&copy; <?= date('Y') ?> Interviewly. All rights reserved.</p>
