@@ -72,10 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <button class="pill-btn" type="submit">Login</button>
       </form>
-
-      <p class="muted" style="margin-top:12px">
-        <a href="/index.php" class="muted" style="text-decoration:none">← Back to Home</a>
-      </p>
       <p class="muted" style="margin-top:12px">
         Don’t have an account?
         <a class="muted" href="/auth/register.php?next=<?= urlencode($next) ?>" style="text-decoration:none">Create one</a>
