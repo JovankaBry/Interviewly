@@ -64,36 +64,30 @@ $title = 'Applications';
 ob_start();
 ?>
 
+<!-- Page styles only; theme stays the same -->
 <style>
   :root{
-    /* match your blue theme tokens */
     --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#3b82f6;
-    --ok:#10b981; --warn:#fbbf24; --bad:#ef4444;
     --bg:#0f172a; --bg-light:#0e1626; --text:#f8fafc; --muted:#9ca3af; --border:#1e293b;
     --radius:12px; --gap:16px; --ring: rgba(37,99,235,.35);
     --shadow-lg: 0 14px 30px rgba(0,0,0,.35);
     --shadow-sm: 0 8px 18px rgba(0,0,0,.25);
   }
 
-  /* ===== Header block with search UNDER filters ===== */
   .page-head{
     border:1px solid var(--border);
     border-radius: 16px;
     background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
     box-shadow: var(--shadow-sm);
     padding: 14px;
-    margin-bottom: 14px;
-  }
-  .head-title{
-    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    margin-bottom: 16px;
   }
   .page-title{ margin:0; font-size:1.2rem; font-weight:800; letter-spacing:.2px }
-  .head-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 
-  /* chips */
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
   .chip{
     display:inline-flex; align-items:center; gap:8px;
-    padding:6px 10px; border-radius:999px; font-weight:700; font-size:.9rem;
+    padding:6px 10px; border-radius: 999px; font-weight:700; font-size:.9rem;
     border:1px solid var(--border); color:#cbd5e1; background: rgba(255,255,255,.02);
     transition: transform .18s ease, background .18s ease, border-color .18s ease;
   }
@@ -104,21 +98,18 @@ ob_start();
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 6px 18px rgba(37,99,235,.18);
   }
 
-  /* search row under filters */
   .head-actions{
-    display:flex; gap: 12px; align-items:center; margin-top: 12px;
-    flex-wrap: wrap;
+    display:flex; gap: 12px; align-items:center; margin-top: 12px; flex-wrap: wrap;
   }
   .search-wrap{
-    flex:1;
+    flex:1 1 360px;
     display:flex; gap:8px; align-items:center;
     padding:6px; border:1px solid var(--border); border-radius: 12px;
     background: rgba(255,255,255,.02);
-    min-width: 260px;
   }
   .search-input{
     flex:1; background:transparent; border:0; outline:none; color:var(--text);
-    padding: 6px 8px; min-width: 140px;
+    padding: 6px 8px;
   }
   .search-btn, .clear-btn{
     padding:8px 12px; border-radius: 999px; border:0; cursor:pointer; font-weight:700;
@@ -140,10 +131,9 @@ ob_start();
   .add-btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 22px rgba(37,99,235,.32); }
   .add-btn-icon{ font-size:1.2rem; }
 
-  /* ===== List ===== */
-  .list{ display:grid; gap: 12px; margin-top: 12px; }
+  .list{ display:grid; gap: 12px; margin-top: 8px; }
   .card{
-    position:relative; overflow:visible; isolation:isolate;
+    position:relative; /* keep cards relative */
     border:1px solid var(--border); border-radius: var(--radius);
     background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
     box-shadow: var(--shadow-sm);
@@ -157,13 +147,24 @@ ob_start();
   .title{ font-weight:800; font-size:1.05rem; margin-bottom:4px }
   .company{ color: var(--muted); display:inline-flex; align-items:center; gap:6px; }
   .company:hover{ color: var(--primary-light); }
-
   .status-container{ display:flex; align-items:center; gap:10px; margin-top: 12px }
   .status-label{ color: var(--muted); font-size: .9rem; }
 
-  /* Floating status menu */
+  /* Pill colors (already in your theme; restated for clarity) */
+  .status-pill{ border:0; border-radius: 999px; padding: 6px 12px; font-weight:700; color:#fff; cursor:pointer; }
+  .status-pill.pending{ background:#3b82f6; }
+  .status-pill.interview{ background:#f59e0b; }
+  .status-pill.accepted{ background:#10b981; }
+  .status-pill.rejected{ background:#ef4444; }
+  .status-pill.noanswer{ background:#64748b; }
+  .dropdown-arrow{ font-size:12px; margin-left:6px; }
+
+  /* The ONLY important change: anchor menu to BODY via absolute positioning */
   .floating-menu{
-    position:absolute; top:0; left:0; z-index:2000; display:none;
+    position: absolute; /* absolute to BODY (we'll move it there in JS) */
+    top: 0; left: 0;
+    z-index: 10000;
+    display:none;
     min-width:180px; padding:6px;
     background: var(--bg-light); border:1px solid var(--border); border-radius: 12px;
     box-shadow: var(--shadow-lg);
@@ -179,45 +180,33 @@ ob_start();
   }
   .status-option:last-child{ margin-bottom:0 }
   .status-option:hover{ transform: translateX(4px); filter: brightness(1.1); }
+  .status-option.pending{ background:#3b82f6; }
+  .status-option.interview{ background:#f59e0b; }
+  .status-option.accepted{ background:#10b981; }
+  .status-option.rejected{ background:#ef4444; }
+  .status-option.noanswer{ background:#64748b; }
 
-  /* Focus ring */
-  .status-pill:focus-visible, .chip:focus-visible, .add-btn:focus-visible,
-  .search-btn:focus-visible, .clear-btn:focus-visible, .search-input:focus-visible{
-    outline:none; box-shadow: 0 0 0 3px var(--ring);
-  }
-
-  /* Empty state */
   .empty-state{ text-align:center; padding: 40px 10px; }
   .empty-state h3{ margin:0 0 6px 0; }
   .empty-state .muted{ color: var(--muted); margin-bottom: 16px; }
 
-  /* Keep pill colors from your theme */
-  .status-pill.pending{ background:#3b82f6; color:#fff }
-  .status-pill.interview{ background:#f59e0b; color:#fff }
-  .status-pill.accepted{ background:#10b981; color:#fff }
-  .status-pill.rejected{ background:#ef4444; color:#fff }
-  .status-pill.noanswer{ background:#64748b; color:#fff }
-
-  /* Mobile tweaks */
   @media (max-width: 860px){
-    .add-btn{ width: 100%; justify-content:center; }
-    .search-wrap{ flex: 1 1 100%; }
+    .head-actions{ flex-direction: column; align-items: stretch; }
+    .add-btn{ width:100%; justify-content:center; }
   }
 </style>
 
-<!-- ===== Header (title + filters, then search UNDER them) ===== -->
+<!-- Header -->
 <div class="page-head">
-  <div class="head-title">
-    <h1 class="page-title">Applications</h1>
-  </div>
+  <h1 class="page-title">Applications</h1>
 
-  <div class="head-filters" role="tablist" aria-label="Status filters">
+  <div class="filters" role="tablist" aria-label="Status filters">
     <?php
       $mk = function(string $label, ?string $key) use ($filter){
         $active = $key === null ? ($filter === null) : ($filter === $key);
         $href   = $key === null
-                  ? url_for('applications.list_applications')
-                  : url_for('applications.list_applications', ['filter'=>$key]);
+                ? url_for('applications.list_applications')
+                : url_for('applications.list_applications', ['filter'=>$key]);
         $cls    = 'chip' . ($active ? ' active' : '');
         echo '<a class="'.$cls.'" href="'.htmlspecialchars($href).'">'.htmlspecialchars($label).'</a>';
       };
@@ -243,8 +232,8 @@ ob_start();
       <?php endif; ?>
     </form>
 
-    <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn" title="Add new application">
-      <span class="add-btn-icon">＋</span> Add Application
+    <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
+      <span class="add-btn-icon">+</span> Add Application
     </a>
   </div>
 </div>
@@ -255,7 +244,7 @@ ob_start();
   </div>
 <?php endif; ?>
 
-<!-- ===== Application List ===== -->
+<!-- List -->
 <div class="list">
   <?php if (!$rows): ?>
     <div class="card">
@@ -263,40 +252,40 @@ ob_start();
         <h3>No applications found</h3>
         <div class="muted">Try adding one or adjust your search or filter.</div>
         <a class="add-btn" href="<?= htmlspecialchars(url_for('applications.new')) ?>">
-          <span class="add-btn-icon">＋</span> Add Application
+          <span class="add-btn-icon">+</span> Add Application
         </a>
       </div>
     </div>
   <?php else: ?>
     <?php foreach ($rows as $r): ?>
-    <div class="card" data-anim>
-      <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
-      <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
-        <?= htmlspecialchars(v($r, 'company')) ?>
-      </a>
+      <div class="card" data-anim>
+        <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
+        <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
+          <?= htmlspecialchars(v($r, 'company')) ?>
+        </a>
 
-      <div class="status-container">
-        <span class="status-label">Status:</span>
-        <?php $status = (string) v($r, 'status'); ?>
-        <button
-          class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
-          type="button"
-          onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
-          <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
-        </button>
+        <div class="status-container">
+          <span class="status-label">Status:</span>
+          <?php $status = (string) v($r, 'status'); ?>
+          <button
+            class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
+            type="button"
+            onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
+            <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
+          </button>
+        </div>
+
+        <!-- Hidden form to submit status change -->
+        <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
+              action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
+          <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+        </form>
       </div>
-
-      <!-- Hidden form to submit status change -->
-      <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
-            action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
-        <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
-      </form>
-    </div>
     <?php endforeach; ?>
   <?php endif; ?>
 </div>
 
-<!-- Floating status menu (one instance only) -->
+<!-- Floating status menu (single instance) -->
 <div id="status-menu" class="floating-menu" role="menu" aria-hidden="true">
   <button type="button" class="status-option pending"   data-status="Pending">Pending</button>
   <button type="button" class="status-option interview" data-status="Interview">Interview</button>
@@ -306,7 +295,14 @@ ob_start();
 </div>
 
 <script>
-  // ===== Status menu logic (unchanged) =====
+  // ---- Make sure the floating menu is attached to <body> so absolute coords work reliably ----
+  (function(){
+    const menu = document.getElementById('status-menu');
+    if (menu && menu.parentNode !== document.body) {
+      document.body.appendChild(menu);
+    }
+  })();
+
   let CURRENT_ID = null;
 
   function openStatusMenu(id, btn, ev) {
@@ -316,11 +312,16 @@ ob_start();
     const menu = document.getElementById('status-menu');
     const rect = btn.getBoundingClientRect();
 
-    menu.style.left = (window.scrollX + rect.left) + 'px';
-    menu.style.top  = (window.scrollY + rect.bottom + 6) + 'px';
+    // Use page coordinates (viewport rect + scroll)
+    const x = window.scrollX + rect.left;
+    const y = window.scrollY + rect.bottom + 6;
+
+    menu.style.left = x + 'px';
+    menu.style.top  = y + 'px';
     menu.classList.add('show');
     menu.setAttribute('aria-hidden', 'false');
   }
+
   function closeStatusMenu() {
     const menu = document.getElementById('status-menu');
     menu.classList.remove('show');
@@ -346,7 +347,7 @@ ob_start();
   window.addEventListener('resize', closeStatusMenu);
   document.getElementById('status-menu').addEventListener('click', e => e.stopPropagation());
 
-  // ===== Reveal animation for list cards =====
+  // Reveal animation for cards (unchanged)
   (function(){
     const els = document.querySelectorAll('.card[data-anim]');
     if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('in')); return; }
