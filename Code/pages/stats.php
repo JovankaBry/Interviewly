@@ -1,6 +1,7 @@
 <?php
 // pages/stats.php
-
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 // Expected from controller: $labels (array), $data (array of counts), $total (int).
 // Provide safe defaults so the page still renders if they’re missing.
 $labels = $labels ?? ['Pending','Interview','Accepted','Rejected','No Answer'];
@@ -117,4 +118,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/../base.php';
+include __DIR__ . '/../includes/base.php';
