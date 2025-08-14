@@ -9,6 +9,7 @@ function url_for(string $name, array $params = []): string {
         'applications.new'          => '/pages/new.php',
         'applications.list_applications' => '/pages/applications.php',
         'applications.set_status'   => '/pages/set_status.php',
+        'stats.stats'                    => '/pages/stats.php',
     ];
     $path = $map[$name] ?? '#';
     if ($params) {
