@@ -1,13 +1,12 @@
 <?php
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// index.php
+// --- connect to database (provides $pdo) ---
+require_once __DIR__ . '/api/db.php';
 
 // --- helpers ---
 function url_for(string $name, array $params = []): string {
-    // map your old Flask endpoints to PHP pages
     $map = [
         'applications.list_applications' => '/pages/applications.php',
         'applications.new'               => '/pages/new.php',
@@ -20,14 +19,42 @@ function url_for(string $name, array $params = []): string {
     }
     return $path;
 }
-function v($row, $key) { // works with array OR object rows
+function v($row, $key) {
     return is_array($row) ? ($row[$key] ?? '') : ($row->$key ?? '');
 }
 
-// --- expected data (safe defaults if not provided) ---
-$rows   = $rows   ?? []; // each row should have position, company, status
-$counts = $counts ?? ['Pending'=>0,'Interview'=>0,'Accepted'=>0,'Rejected'=>0,'No Answer'=>0];
-$total  = $total  ?? array_sum($counts);
+// --- fetch recent rows (max 5 for activity list) ---
+$rows = [];
+try {
+    $stmt = $pdo->prepare("
+        SELECT id, company, position, status
+        FROM applications
+        ORDER BY created_at DESC
+        LIMIT 5
+    ");
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    // Optional: show friendly message, keep UI working
+    error_log('Index fetch rows error: ' . $e->getMessage());
+}
+
+// --- fetch counts by status ---
+$counts = ['Pending'=>0,'Interview'=>0,'Accepted'=>0,'Rejected'=>0,'No Answer'=>0];
+try {
+    $stmt = $pdo->query("
+        SELECT status, COUNT(*) AS c
+        FROM applications
+        GROUP BY status
+    ");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $counts[$r['status']] = (int)$r['c'];
+    }
+} catch (Throwable $e) {
+    error_log('Index fetch counts error: ' . $e->getMessage());
+}
+
+$total = array_sum($counts);
 
 // --- page title for base.php ---
 $title = 'Home';
@@ -69,16 +96,12 @@ ob_start();
         $pct   = $total ? ($value / $total * 100) : 0;
       ?>
       <a href="<?= htmlspecialchars(url_for('applications.list_applications', ['filter' => $label])) ?>" class="status-row">
-        <!-- Left: Pill + Count -->
         <div class="status-left">
           <span class="status-pill <?= strtolower(str_replace(' ', '', $label)) ?>"><?= htmlspecialchars($label) ?></span>
           <span class="count-text"><?= $value ?></span>
         </div>
-
-        <!-- Right: Progress bar + Percentage -->
         <div class="status-right">
           <div class="progress-bar">
-            <!-- pass percent as data attribute (no inline CSS) -->
             <div class="progress-fill <?= strtolower(str_replace(' ', '', $label)) ?>"
                  data-pct="<?= sprintf('%.2f', $pct) ?>"></div>
           </div>
@@ -106,7 +129,7 @@ ob_start();
     </div>
   <?php else: ?>
     <div class="activity-list">
-      <?php foreach (array_slice($rows, 0, 5) as $r): ?>
+      <?php foreach ($rows as $r): ?>
         <div class="activity-item">
           <div class="activity-content">
             <div class="activity-title"><?= htmlspecialchars(v($r, 'position')) ?></div>
@@ -127,7 +150,6 @@ ob_start();
   <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="btn-outline">Add New</a>
 </div>
 
-<!-- Set progress widths from data-pct (prevents CSS-linter errors) -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.progress-fill[data-pct]').forEach(el => {
@@ -139,4 +161,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/includes/base.php';   // uses $title and $content
+include __DIR__ . '/includes/base.php';
