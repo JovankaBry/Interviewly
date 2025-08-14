@@ -64,70 +64,228 @@ $title = 'Applications';
 ob_start();
 ?>
 
-<!-- Add button + search -->
-<div class="list-header">
-  <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
-    <span class="add-btn-icon">+</span>
-    <span class="add-btn-text">Add Application</span>
-  </a>
+<!-- Page styles only; theme stays the same -->
+<style>
+  :root{
+    --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#3b82f6;
+    --bg:#0f172a; --bg-light:#0e1626; --text:#f8fafc; --muted:#9ca3af; --border:#1e293b;
+    --radius:12px; --gap:16px; --ring: rgba(37,99,235,.35);
+    --shadow-lg: 0 14px 30px rgba(0,0,0,.35);
+    --shadow-sm: 0 8px 18px rgba(0,0,0,.25);
+  }
 
-  <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-wrap">
-    <input class="search-input" type="text" name="q" placeholder="Search company or position"
-           value="<?= htmlspecialchars($q) ?>">
-    <?php if ($filter): ?>
-      <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-    <?php endif; ?>
-    <button class="search-btn" type="submit">Search</button>
-    <?php if ($q || $filter): ?>
-      <a class="clear-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">Clear</a>
-    <?php endif; ?>
-  </form>
+  .page-head{
+    border:1px solid var(--border);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+    box-shadow: var(--shadow-sm);
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .page-title{ margin:0; font-size:1.2rem; font-weight:800; letter-spacing:.2px }
+
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+  .chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; border-radius: 999px; font-weight:700; font-size:.9rem;
+    border:1px solid var(--border); color:#cbd5e1; background: rgba(255,255,255,.02);
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .chip:hover{ transform: translateY(-1px); background: rgba(255,255,255,.04); }
+  .chip.active{
+    color:#fff; background: linear-gradient(180deg, rgba(37,99,235,.25), rgba(37,99,235,.12));
+    border-color: rgba(37,99,235,.35);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 6px 18px rgba(37,99,235,.18);
+  }
+
+  .head-actions{
+    display:flex; gap: 12px; align-items:center; margin-top: 12px; flex-wrap: wrap;
+  }
+  .search-wrap{
+    flex:1 1 360px;
+    display:flex; gap:8px; align-items:center;
+    padding:6px; border:1px solid var(--border); border-radius: 12px;
+    background: rgba(255,255,255,.02);
+  }
+  .search-input{
+    flex:1; background:transparent; border:0; outline:none; color:var(--text);
+    padding: 6px 8px;
+  }
+  .search-btn, .clear-btn{
+    padding:8px 12px; border-radius: 999px; border:0; cursor:pointer; font-weight:700;
+    transition: transform .18s ease, filter .18s ease;
+  }
+  .search-btn{ background: var(--primary); color:#fff }
+  .search-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+  .clear-btn{ background:#334155; color:#fff; text-decoration:none }
+  .clear-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+
+  .add-btn{
+    display:inline-flex; align-items:center; gap:10px; white-space:nowrap;
+    padding: 10px 14px; border-radius: 10px;
+    background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+    color:#fff; font-weight:700; border:1px solid rgba(255,255,255,.06);
+    box-shadow: 0 10px 20px rgba(37,99,235,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .add-btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 22px rgba(37,99,235,.32); }
+  .add-btn-icon{ font-size:1.2rem; }
+
+  .list{ display:grid; gap: 12px; margin-top: 8px; }
+  .card{
+    position:relative; /* keep cards relative */
+    border:1px solid var(--border); border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+    box-shadow: var(--shadow-sm);
+    padding: 14px;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+  }
+  .card:hover{ transform: translateY(-2px); border-color: rgba(37,99,235,.35); box-shadow: var(--shadow-lg); }
+  .card[data-anim]{ opacity:0; transform: translateY(8px); }
+  .card.in{ opacity:1; transform:none; transition: opacity .45s ease, transform .45s ease; }
+
+  .title{ font-weight:800; font-size:1.05rem; margin-bottom:4px }
+  .company{ color: var(--muted); display:inline-flex; align-items:center; gap:6px; }
+  .company:hover{ color: var(--primary-light); }
+  .status-container{ display:flex; align-items:center; gap:10px; margin-top: 12px }
+  .status-label{ color: var(--muted); font-size: .9rem; }
+
+  /* Pill colors (already in your theme; restated for clarity) */
+  .status-pill{ border:0; border-radius: 999px; padding: 6px 12px; font-weight:700; color:#fff; cursor:pointer; }
+  .status-pill.pending{ background:#3b82f6; }
+  .status-pill.interview{ background:#f59e0b; }
+  .status-pill.accepted{ background:#10b981; }
+  .status-pill.rejected{ background:#ef4444; }
+  .status-pill.noanswer{ background:#64748b; }
+  .dropdown-arrow{ font-size:12px; margin-left:6px; }
+
+  /* The ONLY important change: anchor menu to BODY via absolute positioning */
+  .floating-menu{
+    position: absolute; /* absolute to BODY (we'll move it there in JS) */
+    top: 0; left: 0;
+    z-index: 10000;
+    display:none;
+    min-width:180px; padding:6px;
+    background: var(--bg-light); border:1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    animation: pop .12s ease both;
+  }
+  .floating-menu.show{ display:block; }
+  @keyframes pop{ from{ transform:translateY(-4px); opacity:0 } to{ transform:none; opacity:1 } }
+
+  .status-option{
+    display:block; width:100%; margin:0 0 6px 0; padding:8px 12px; border:0; border-radius: 10px;
+    font-weight:700; text-align:left; color:#fff; cursor:pointer;
+    transition: transform .15s ease, filter .15s ease;
+  }
+  .status-option:last-child{ margin-bottom:0 }
+  .status-option:hover{ transform: translateX(4px); filter: brightness(1.1); }
+  .status-option.pending{ background:#3b82f6; }
+  .status-option.interview{ background:#f59e0b; }
+  .status-option.accepted{ background:#10b981; }
+  .status-option.rejected{ background:#ef4444; }
+  .status-option.noanswer{ background:#64748b; }
+
+  .empty-state{ text-align:center; padding: 40px 10px; }
+  .empty-state h3{ margin:0 0 6px 0; }
+  .empty-state .muted{ color: var(--muted); margin-bottom: 16px; }
+
+  @media (max-width: 860px){
+    .head-actions{ flex-direction: column; align-items: stretch; }
+    .add-btn{ width:100%; justify-content:center; }
+  }
+</style>
+
+<!-- Header -->
+<div class="page-head">
+  <h1 class="page-title">Applications</h1>
+
+  <div class="filters" role="tablist" aria-label="Status filters">
+    <?php
+      $mk = function(string $label, ?string $key) use ($filter){
+        $active = $key === null ? ($filter === null) : ($filter === $key);
+        $href   = $key === null
+                ? url_for('applications.list_applications')
+                : url_for('applications.list_applications', ['filter'=>$key]);
+        $cls    = 'chip' . ($active ? ' active' : '');
+        echo '<a class="'.$cls.'" href="'.htmlspecialchars($href).'">'.htmlspecialchars($label).'</a>';
+      };
+      $mk('All', null);
+      $mk('Pending','Pending');
+      $mk('Interview','Interview');
+      $mk('Accepted','Accepted');
+      $mk('Rejected','Rejected');
+      $mk('No Answer','No Answer');
+    ?>
+  </div>
+
+  <div class="head-actions">
+    <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-wrap">
+      <input class="search-input" type="text" name="q" placeholder="Search company or position"
+             value="<?= htmlspecialchars($q) ?>" aria-label="Search">
+      <?php if ($filter): ?>
+        <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+      <?php endif; ?>
+      <button class="search-btn" type="submit">Search</button>
+      <?php if ($q || $filter): ?>
+        <a class="clear-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">Clear</a>
+      <?php endif; ?>
+    </form>
+
+    <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
+      <span class="add-btn-icon">+</span> Add Application
+    </a>
+  </div>
 </div>
 
 <?php if (!empty($load_error)): ?>
-  <div class="card" style="background:#2b2b2b;color:#ffb4b4;padding:12px;border-radius:8px;margin:10px 0;">
+  <div class="card" style="background:#2b2b2b;color:#ffb4b4;padding:12px;border-radius:8px;margin:12px 0;">
     <?= htmlspecialchars($load_error) ?>
   </div>
 <?php endif; ?>
 
-<!-- Application List -->
+<!-- List -->
 <div class="list">
   <?php if (!$rows): ?>
     <div class="card">
-      <div class="title">No applications found</div>
-      <div class="company">Try adding one or adjust your search/filter.</div>
+      <div class="empty-state">
+        <h3>No applications found</h3>
+        <div class="muted">Try adding one or adjust your search or filter.</div>
+        <a class="add-btn" href="<?= htmlspecialchars(url_for('applications.new')) ?>">
+          <span class="add-btn-icon">+</span> Add Application
+        </a>
+      </div>
     </div>
   <?php else: ?>
     <?php foreach ($rows as $r): ?>
-    <div class="card">
-      <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
-      <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
-        <?= htmlspecialchars(v($r, 'company')) ?>
-      </a>
+      <div class="card" data-anim>
+        <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
+        <a class="company" href="/companies/<?= rawurlencode(v($r, 'company')) ?>">
+          <?= htmlspecialchars(v($r, 'company')) ?>
+        </a>
 
-      <div class="status-container">
-        <span class="status-label">Status:</span>
+        <div class="status-container">
+          <span class="status-label">Status:</span>
+          <?php $status = (string) v($r, 'status'); ?>
+          <button
+            class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
+            type="button"
+            onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
+            <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
+          </button>
+        </div>
 
-        <?php $status = (string) v($r, 'status'); ?>
-        <button
-          class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
-          type="button"
-          onclick="openStatusMenu('<?= htmlspecialchars(v($r, 'id')) ?>', this, event)">
-          <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
-        </button>
+        <!-- Hidden form to submit status change -->
+        <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
+              action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
+          <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+        </form>
       </div>
-
-      <!-- Hidden form to submit status change -->
-      <form id="form-<?= htmlspecialchars(v($r, 'id')) ?>" method="post"
-            action="<?= htmlspecialchars(url_for('applications.set_status', ['app_id' => v($r, 'id')])) ?>">
-        <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
-      </form>
-    </div>
     <?php endforeach; ?>
   <?php endif; ?>
 </div>
 
-<!-- Floating status menu (one instance only) -->
+<!-- Floating status menu (single instance) -->
 <div id="status-menu" class="floating-menu" role="menu" aria-hidden="true">
   <button type="button" class="status-option pending"   data-status="Pending">Pending</button>
   <button type="button" class="status-option interview" data-status="Interview">Interview</button>
@@ -137,6 +295,14 @@ ob_start();
 </div>
 
 <script>
+  // ---- Make sure the floating menu is attached to <body> so absolute coords work reliably ----
+  (function(){
+    const menu = document.getElementById('status-menu');
+    if (menu && menu.parentNode !== document.body) {
+      document.body.appendChild(menu);
+    }
+  })();
+
   let CURRENT_ID = null;
 
   function openStatusMenu(id, btn, ev) {
@@ -146,11 +312,16 @@ ob_start();
     const menu = document.getElementById('status-menu');
     const rect = btn.getBoundingClientRect();
 
-    menu.style.left = (window.scrollX + rect.left) + 'px';
-    menu.style.top  = (window.scrollY + rect.bottom + 6) + 'px';
+    // Use page coordinates (viewport rect + scroll)
+    const x = window.scrollX + rect.left;
+    const y = window.scrollY + rect.bottom + 6;
+
+    menu.style.left = x + 'px';
+    menu.style.top  = y + 'px';
     menu.classList.add('show');
     menu.setAttribute('aria-hidden', 'false');
   }
+
   function closeStatusMenu() {
     const menu = document.getElementById('status-menu');
     menu.classList.remove('show');
@@ -175,19 +346,19 @@ ob_start();
   window.addEventListener('scroll', closeStatusMenu, { passive: true });
   window.addEventListener('resize', closeStatusMenu);
   document.getElementById('status-menu').addEventListener('click', e => e.stopPropagation());
-</script>
 
-<style>
-.search-wrap{ display:flex; gap:8px; align-items:center; margin-left:auto }
-.search-input{
-  background:transparent; border:1px solid #1e293b; border-radius:10px; padding:8px 10px; color:#f8fafc;
-}
-.search-btn,.clear-btn{
-  border:0; padding:8px 12px; border-radius:999px; text-decoration:none; cursor:pointer;
-  background:#2563eb; color:#000; font-weight:600;
-}
-.clear-btn{ background:#334155; color:#f8fafc }
-</style>
+  // Reveal animation for cards (unchanged)
+  (function(){
+    const els = document.querySelectorAll('.card[data-anim]');
+    if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('in')); return; }
+    const io = new IntersectionObserver((entries, obs)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); }
+      });
+    }, { threshold: .2 });
+    els.forEach(el => io.observe(el));
+  })();
+</script>
 
 <?php
 $content = ob_get_clean();
