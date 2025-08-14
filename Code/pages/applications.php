@@ -3,8 +3,12 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-/* ---------- DB connection (PDO) ---------- */
-require_once __DIR__ . '/../api/db.php'; // provides $pdo
+/* ---------- auth + db ---------- */
+require_once __DIR__ . '/../auth/auth.php';
+require_login();
+$uid = current_user_id();
+
+require_once __DIR__ . '/../api/db.php'; // $pdo
 
 /* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
@@ -29,24 +33,21 @@ $validStatuses = ['Pending','Interview','Accepted','Rejected','No Answer'];
 $filter = isset($_GET['filter']) && in_array($_GET['filter'], $validStatuses, true) ? $_GET['filter'] : null;
 $q      = trim($_GET['q'] ?? '');
 
-/* ---------- fetch rows from DB ---------- */
+/* ---------- fetch rows from DB (SCOPED BY user_id) ---------- */
 $rows = [];
 try {
     $sql = "SELECT id, company, position, status
-            FROM applications";
-    $where = [];
-    $params = [];
+            FROM applications
+            WHERE user_id = :uid";
+    $params = [':uid' => $uid];
 
     if ($filter) {
-        $where[] = "status = :status";
+        $sql .= " AND status = :status";
         $params[':status'] = $filter;
     }
     if ($q !== '') {
-        $where[] = "(company LIKE :q OR position LIKE :q)";
+        $sql .= " AND (company LIKE :q OR position LIKE :q)";
         $params[':q'] = "%{$q}%";
-    }
-    if ($where) {
-        $sql .= " WHERE " . implode(" AND ", $where);
     }
     $sql .= " ORDER BY created_at DESC";
 
@@ -54,7 +55,6 @@ try {
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
-    // show a friendly warning in the list
     $rows = [];
     $load_error = 'Could not load applications: ' . $e->getMessage();
 }
@@ -64,7 +64,7 @@ $title = 'Applications';
 ob_start();
 ?>
 
-<!-- Add button + (optional) search + filter badge -->
+<!-- Add button + search -->
 <div class="list-header">
   <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
     <span class="add-btn-icon">+</span>
@@ -178,7 +178,6 @@ ob_start();
 </script>
 
 <style>
-/* small styling add-ons for the search bar (matches your dark theme) */
 .search-wrap{ display:flex; gap:8px; align-items:center; margin-left:auto }
 .search-input{
   background:transparent; border:1px solid #1e293b; border-radius:10px; padding:8px 10px; color:#f8fafc;

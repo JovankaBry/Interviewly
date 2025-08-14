@@ -1,13 +1,15 @@
 <?php
 // includes/base.php
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// start/read session (for login state)
+/* ---- sessions + (optional) auth helpers ---- */
 require_once __DIR__ . '/../api/session.php';
+if (file_exists(__DIR__ . '/../auth/auth.php')) {
+  require_once __DIR__ . '/../auth/auth.php'; // gives is_logged_in(), current_user(), current_user_id()
+}
 
-// ---- helpers ----
+/* ---- routes helper ---- */
 if (!function_exists('url_for')) {
   function url_for(string $name, array $params = []): string {
       $map = [
@@ -28,6 +30,7 @@ if (!function_exists('url_for')) {
   }
 }
 
+/* ---- active link helper ---- */
 if (!function_exists('is_active')) {
   function is_active(string $endpoint): bool {
       $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -37,14 +40,46 @@ if (!function_exists('is_active')) {
   }
 }
 
-// ---- safe defaults for template variables ----
-$counts  = $counts  ?? ['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0];
-$total   = $total   ?? array_sum($counts);
+/* ---- defaults ----
+   If the page already set $counts / $total, we keep them.
+   Otherwise, we compute per-user counts here (if logged in). */
+$counts  = $counts  ?? null;   // possibly set by the page
+$total   = $total   ?? null;
 $title   = $title   ?? 'Interviewly - Job Application Tracker';
 $content = $content ?? '';
 
-// current user (if logged in)
-$me = $_SESSION['user'] ?? null;
+$me  = $_SESSION['user'] ?? null;
+$uid = isset($me['id']) ? (int)$me['id'] : 0;
+
+if ($counts === null || $total === null) {
+  // Only compute if we can scope to a user (logged in)
+  $scopedCounts = ['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0];
+  if ($uid > 0) {
+    // Try to load from DB
+    try {
+      require_once __DIR__ . '/../api/db.php'; // $pdo
+      $stmt = $pdo->prepare("
+        SELECT status, COUNT(*) AS c
+        FROM applications
+        WHERE user_id = :uid
+        GROUP BY status
+      ");
+      $stmt->execute([':uid' => $uid]);
+      foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $s = $r['status'];
+        if (isset($scopedCounts[$s])) $scopedCounts[$s] = (int)$r['c'];
+      }
+    } catch (Throwable $e) {
+      // fall back to zeros; keep site running
+      error_log('base.php header counts error: ' . $e->getMessage());
+    }
+  }
+  $counts = $counts ?? $scopedCounts;
+  $total  = $total  ?? array_sum($scopedCounts);
+}
+
+// Safety: ensure keys exist
+$counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0], (array)$counts);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +93,9 @@ $me = $_SESSION['user'] ?? null;
   <div class="container">
     <header class="combined-header">
       <nav class="main-nav">
-        <h1 class="logo"><a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">Interviewly</a></h1>
+        <h1 class="logo">
+          <a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">Interviewly</a>
+        </h1>
 
         <div class="nav-links">
           <a href="<?= htmlspecialchars(url_for('home.home')) ?>"
@@ -72,14 +109,13 @@ $me = $_SESSION['user'] ?? null;
         </div>
 
         <div class="nav-auth" style="margin-left:auto; display:flex; align-items:center; gap:10px;">
-          <?php if ($me): ?>
+          <?php if (!empty($me)): ?>
             <span class="muted" style="white-space:nowrap;">
               Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?>
             </span>
             <a class="btn-outline" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
           <?php else: ?>
             <?php
-              // keep `next` so user returns to current page after login
               $next = $_SERVER['REQUEST_URI'] ?? '/index.php';
               $loginUrl = url_for('auth.login', ['next' => $next]);
             ?>

@@ -1,13 +1,16 @@
 <?php
 // pages/set_status.php
-// Update an application's status, then redirect back to the list (or referrer)
+// Update an application's status (scoped to the logged-in user), then redirect back.
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require __DIR__ . '/../api/db.php'; // provides $pdo
+require_once __DIR__ . '/../auth/auth.php';
+require_login();
+$uid = current_user_id();
 
-// same interface as your form: ?app_id=... and POST[status]
+require_once __DIR__ . '/../api/db.php'; // $pdo
+
 $appId  = isset($_GET['app_id']) ? (int)$_GET['app_id'] : 0;
 $status = isset($_POST['status']) ? trim($_POST['status']) : '';
 
@@ -18,25 +21,21 @@ try {
         $stmt = $pdo->prepare(
             "UPDATE applications
              SET status = :s, updated_at = NOW()
-             WHERE id = :id"
+             WHERE id = :id AND user_id = :uid"
         );
-        $stmt->execute([':s' => $status, ':id' => $appId]);
+        $stmt->execute([':s' => $status, ':id' => $appId, ':uid' => $uid]);
     }
 } catch (Throwable $e) {
-    // optional: log and show a friendly message (but still redirect)
     error_log('set_status error: ' . $e->getMessage());
 }
 
-// Redirect back: prefer the page user came from, fall back to list
+// Redirect back (same host only)
 $back = '/pages/applications.php';
 if (!empty($_SERVER['HTTP_REFERER'])) {
-    // keep it on your site only
     $url = $_SERVER['HTTP_REFERER'];
-    if (parse_url($url, PHP_URL_HOST) === $_SERVER['HTTP_HOST']) {
+    if (parse_url($url, PHP_URL_HOST) === ($_SERVER['HTTP_HOST'] ?? '')) {
         $back = $url;
     }
 }
-
-// Use 303 to avoid form resubmission
 header('Location: ' . $back, true, 303);
 exit;

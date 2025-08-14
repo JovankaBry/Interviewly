@@ -3,32 +3,33 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-/* ---------- DB connection (PDO) ---------- */
+/* ---------- auth + db ---------- */
+require_once __DIR__ . '/../auth/auth.php';
+require_login();
+$uid = current_user_id();
+
 require_once __DIR__ . '/../api/db.php'; // provides $pdo
 
-/* ---------- fetch counts from DB ---------- */
-// We keep these 5 labels fixed to match your enum.
+/* ---------- fetch counts from DB (per user) ---------- */
 $labels = ['Pending','Interview','Accepted','Rejected','No Answer'];
 $data   = array_fill(0, count($labels), 0);
 
 try {
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT status, COUNT(*) AS c
         FROM applications
+        WHERE user_id = :uid
         GROUP BY status
     ");
+    $stmt->execute([':uid' => $uid]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // map DB results into $data using fixed label order
     $index = array_flip($labels);
     foreach ($rows as $r) {
         $s = $r['status'] ?? '';
-        if (isset($index[$s])) {
-            $data[$index[$s]] = (int)$r['c'];
-        }
+        if (isset($index[$s])) $data[$index[$s]] = (int)$r['c'];
     }
 } catch (Throwable $e) {
-    // If DB fails, keep zeros and show a soft note.
     $load_error = 'Could not load stats: ' . $e->getMessage();
 }
 

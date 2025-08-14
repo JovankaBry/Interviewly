@@ -3,6 +3,13 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+/* ---------- auth + db ---------- */
+require_once __DIR__ . '/../auth/auth.php';
+require_login();
+$uid = current_user_id();
+
+require_once __DIR__ . '/../api/db.php'; // provides $pdo
+
 /* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
     $map = [
@@ -21,8 +28,6 @@ function h(?string $s): string { return htmlspecialchars($s ?? '', ENT_QUOTES, '
 /* ---------- handle POST ---------- */
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require __DIR__ . '/../api/db.php'; // provides $pdo (and maybe $mysqli)
-
     // inputs
     $company          = trim($_POST['company']          ?? '');
     $position         = trim($_POST['position']         ?? '');
@@ -46,17 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
-        // INSERT (expects columns to exist: location, job_link, source, next_action_date, salary_range, notes, updated_at)
+        // INSERT includes user_id
         $sql = "INSERT INTO applications
-                (company, position, status, location, job_link, source,
+                (user_id, company, position, status, location, job_link, source,
                  applied_date, next_action_date, salary_range, notes,
                  created_at, updated_at)
-                VALUES (:company, :position, :status, :location, :job_link, :source,
+                VALUES (:uid, :company, :position, :status, :location, :job_link, :source,
                         :applied_date, :next_action_date, :salary_range, :notes,
                         NOW(), NOW())";
         try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
+                ':uid'              => $uid,                 // << required
                 ':company'          => $company,
                 ':position'         => $position,
                 ':status'           => 'Pending',
@@ -141,9 +147,7 @@ ob_start();
     let normalized = v;
     if (!/^https?:\/\//i.test(v)) normalized = "https://" + v;
     linkEl.value = normalized;
-    try {
-      if (!sourceEl.value.trim()) sourceEl.value = new URL(normalized).hostname;
-    } catch {}
+    try { if (!sourceEl.value.trim()) sourceEl.value = new URL(normalized).hostname; } catch {}
   });
 
   // simple client validation

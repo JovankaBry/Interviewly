@@ -1,11 +1,16 @@
 <?php
+// index.php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// --- connect to database (provides $pdo) ---
-require_once __DIR__ . '/api/db.php';
+/* ---------- auth + db ---------- */
+require_once __DIR__ . '/auth/auth.php';
+require_login();
+$uid = current_user_id();          // <- use this in queries
 
-// --- helpers ---
+require_once __DIR__ . '/api/db.php'; // provides $pdo
+
+/* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
     $map = [
         'applications.list_applications' => '/pages/applications.php',
@@ -25,43 +30,43 @@ function v($row, $key) {
     return is_array($row) ? ($row[$key] ?? '') : ($row->$key ?? '');
 }
 
-// --- fetch recent rows (max 5 for activity list) ---
+/* ---------- fetch recent rows (for activity) ---------- */
 $rows = [];
 try {
     $stmt = $pdo->prepare("
         SELECT id, company, position, status
         FROM applications
+        WHERE user_id = :uid
         ORDER BY created_at DESC
         LIMIT 5
     ");
-    $stmt->execute();
+    $stmt->execute([':uid' => $uid]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
-    // Optional: show friendly message, keep UI working
     error_log('Index fetch rows error: ' . $e->getMessage());
 }
 
-// --- fetch counts by status ---
+/* ---------- fetch counts by status (scoped to user) ---------- */
 $counts = ['Pending'=>0,'Interview'=>0,'Accepted'=>0,'Rejected'=>0,'No Answer'=>0];
 try {
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT status, COUNT(*) AS c
         FROM applications
+        WHERE user_id = :uid
         GROUP BY status
     ");
+    $stmt->execute([':uid' => $uid]);
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-        $counts[$r['status']] = (int)$r['c'];
+        $s = $r['status'];
+        if (isset($counts[$s])) $counts[$s] = (int)$r['c'];
     }
 } catch (Throwable $e) {
     error_log('Index fetch counts error: ' . $e->getMessage());
 }
-
 $total = array_sum($counts);
 
-// --- page title for base.php ---
+/* ---------- page ---------- */
 $title = 'Home';
-
-// --- capture page content ---
 ob_start();
 ?>
 
@@ -163,4 +168,5 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
+/* base.php uses $title, $counts, $total, $content */
 include __DIR__ . '/includes/base.php';
