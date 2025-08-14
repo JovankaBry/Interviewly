@@ -52,10 +52,8 @@ $me  = $_SESSION['user'] ?? null;
 $uid = isset($me['id']) ? (int)$me['id'] : 0;
 
 if ($counts === null || $total === null) {
-  // Only compute if we can scope to a user (logged in)
   $scopedCounts = ['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0];
   if ($uid > 0) {
-    // Try to load from DB
     try {
       require_once __DIR__ . '/../api/db.php'; // $pdo
       $stmt = $pdo->prepare("
@@ -70,7 +68,6 @@ if ($counts === null || $total === null) {
         if (isset($scopedCounts[$s])) $scopedCounts[$s] = (int)$r['c'];
       }
     } catch (Throwable $e) {
-      // fall back to zeros; keep site running
       error_log('base.php header counts error: ' . $e->getMessage());
     }
   }
@@ -78,7 +75,6 @@ if ($counts === null || $total === null) {
   $total  = $total  ?? array_sum($scopedCounts);
 }
 
-// Safety: ensure keys exist
 $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'No Answer'=>0], (array)$counts);
 ?>
 <!DOCTYPE html>
@@ -87,6 +83,10 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/images/icon2.png">
+
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -94,7 +94,10 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     <header class="combined-header">
       <nav class="main-nav">
         <h1 class="logo">
-          <a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">Interviewly</a>
+          <a href="<?= htmlspecialchars(url_for('home.home')) ?>" style="text-decoration:none;color:inherit">
+            <img src="/static/images/icon2.png" alt="Interviewly Logo" style="height:24px;vertical-align:middle;margin-right:5px;">
+            Interviewly
+          </a>
         </h1>
 
         <div class="nav-links">
