@@ -37,7 +37,13 @@ $q      = trim($_GET['q'] ?? '');
 /* ---------- fetch rows (scoped by user) ---------- */
 $rows = [];
 try {
-    $sql = "SELECT id, company, position, status, job_link AS href
+    // NOTE: alias `position` to avoid any collision with MySQL POSITION() function
+    $sql = "SELECT id,
+                   company,
+                   `position` AS position_title,
+                   job_type,
+                   status,
+                   job_link AS href
             FROM applications
             WHERE user_id = :uid";
     $params = [':uid' => $uid];
@@ -47,8 +53,8 @@ try {
         $params[':status'] = $filter;
     }
     if ($q !== '') {
-        // Use two placeholders to avoid HY093 with native prepares
-        $sql .= " AND (LOWER(company) LIKE :q_company OR LOWER(position) LIKE :q_position)";
+        // backtick the column name here too
+        $sql .= " AND (LOWER(company) LIKE :q_company OR LOWER(`position`) LIKE :q_position)";
         $like = '%' . mb_strtolower($q, 'UTF-8') . '%';
         $params[':q_company']  = $like;
         $params[':q_position'] = $like;
@@ -105,11 +111,24 @@ ob_start();
   .card{ position:relative; border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); box-shadow:var(--shadow-sm); padding:14px; transition:.2s; }
   .card:hover{ transform:translateY(-2px); border-color:rgba(37,99,235,.35); box-shadow:var(--shadow-lg); }
 
-  .title{ font-weight:800; font-size:1.05rem; margin-bottom:4px }
+  .title{ font-weight:800; font-size:1.05rem; margin-bottom:6px; color:#fff; }
   .title a{ color:#fff; text-decoration:none; }
   .title a:hover{ text-decoration:underline; }
+
+  /* Job type pill displayed between title and company */
+  .jobtype{
+    display:inline-block;
+    margin:0 0 6px 0;
+    padding:4px 10px;
+    border-radius:999px;
+    background:linear-gradient(180deg, rgba(37,99,235,.20), rgba(37,99,235,.10));
+    border:1px solid rgba(37,99,235,.35);
+    color:#cfe1ff;
+    font-weight:700;
+    font-size:.85rem;
+  }
+
   .company{ color:var(--muted); }
-  .company:hover{ color:var(--primary-light); }
 
   .top-actions{ position:absolute; top:10px; right:10px; display:flex; gap:8px; }
 
@@ -197,10 +216,12 @@ ob_start();
   <?php else: ?>
     <?php foreach ($rows as $r): ?>
       <?php
-        $appId    = (int) v($r, 'id');
-        $href     = trim((string)($r['href'] ?? ''));
-        $safeHref = (preg_match('~^https?://~i', $href)) ? $href : '';
-        $status   = (string) v($r, 'status');
+        $appId     = (int) v($r, 'id');
+        $href      = trim((string)($r['href'] ?? ''));
+        $safeHref  = (preg_match('~^https?://~i', $href)) ? $href : '';
+        $status    = (string) v($r, 'status');
+        $jobType   = (string) v($r, 'job_type');
+        $positionT = (string) v($r, 'position_title'); // <-- aliased field
         $returnUrl = $_SERVER['REQUEST_URI'] ?? '/pages/applications.php';
       ?>
       <div class="card">
@@ -215,12 +236,16 @@ ob_start();
         <div class="title">
           <?php if ($safeHref !== ''): ?>
             <a href="<?= htmlspecialchars($safeHref) ?>" target="_blank" rel="noopener noreferrer">
-              <?= htmlspecialchars(v($r, 'position')) ?>
+              <?= htmlspecialchars($positionT) ?>
             </a>
           <?php else: ?>
-            <?= htmlspecialchars(v($r, 'position')) ?>
+            <?= htmlspecialchars($positionT) ?>
           <?php endif; ?>
         </div>
+
+        <?php if ($jobType !== ''): ?>
+          <div class="jobtype"><?= htmlspecialchars($jobType) ?></div>
+        <?php endif; ?>
 
         <div class="company"><?= htmlspecialchars(v($r, 'company')) ?></div>
 
