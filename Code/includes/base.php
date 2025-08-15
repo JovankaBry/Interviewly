@@ -96,7 +96,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       --radius-sm:10px;
       --card-bg:rgba(255,255,255,0.03);
 
-      /* New: unify height for greeting + logout */
+      /* unify height for greeting + logout */
       --nav-control-h: 36px;
     }
 
@@ -114,6 +114,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       overflow: hidden;
     }
 
+    /* ===== NAV ===== */
     .main-nav{
       display:flex; align-items:center; gap:12px;
       padding: 14px 16px;
@@ -146,35 +147,34 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 8px 20px rgba(37,99,235,.22);
     }
 
-    /* AUTH — PERFECT vertical centering beside Logout */
+    /* AUTH — perfect vertical centering beside Logout */
     .nav-auth{
       margin-left:auto;
       display:flex;
-      align-items:center;              /* center the whole group */
+      align-items:center;
       gap:12px;
     }
     .nav-auth .greeting{
-      display:flex;                    /* center the line box itself */
-      align-items:center;
-      height: var(--nav-control-h);    /* same height as button */
+      display:flex; align-items:center;
+      height: var(--nav-control-h);
       line-height: 1;
       color: var(--muted);
-      font-size: 1.05rem;              /* a little bigger */
+      font-size: 1.05rem;
       font-weight: 500;
-      padding: 0 2px;                  /* tiny breathing room */
+      padding: 0 2px;
     }
 
     .btn, .btn-outline{
-      display:flex; align-items:center; justify-content:center; /* center text */
+      display:flex; align-items:center; justify-content:center;
       height: var(--nav-control-h);
-      padding: 0 14px;                 /* horizontal only (height controlled above) */
+      padding: 0 14px;
       border-radius:10px; font-weight:800; text-decoration:none;
       border:1px solid rgba(255,255,255,.06);
     }
     .btn{ background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color:#fff; }
     .btn-outline{ color:#fff; background: rgba(255,255,255,.03); border-color: var(--border); }
 
-    /* HERO below nav */
+    /* ===== HERO (subtitle + counters) ===== */
     .hero{
       padding: 18px 16px;
       background: var(--card-bg);
@@ -185,6 +185,8 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       font-size:1.05rem;
       color:#e9efff;
     }
+
+    /* Desktop/tablet default: row layout */
     .hero-stats{
       display:flex;
       gap:14px;
@@ -213,6 +215,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       display:block;
     }
 
+    /* ===== Main content ===== */
     .main-content{
       margin-top: 16px;
       border:1px solid var(--border);
@@ -223,14 +226,38 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     }
     .main-footer{ text-align:center; color:var(--muted); padding:18px 10px 8px; font-size:.9rem; }
 
-    @media (max-width: 800px){
-      .main-nav{ flex-wrap: wrap; }
-      .logo{ font-size: 1.4rem; }
-      .hero{ padding: 14px 16px; }
-      .stat-item{ min-width:120px; padding:14px 16px; }
-      .stat-number{ font-size:1.6rem; }
+    /* ======= Mobile sizing: smaller + grid so it fits nicely ======= */
+    @media (max-width: 600px){
+      .hero{ padding: 12px 12px; }
+      .subtitle{ font-size: .95rem; margin-bottom: 10px; }
+
+      /* Use grid that auto-fits 2–3 items per row depending on width */
+      .hero-stats{
+        display:grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+      }
+      .stat-item{
+        min-width: 0;           /* let grid control width */
+        padding: 10px 8px;      /* tighter padding */
+        border-radius: 8px;
+      }
+      .stat-label{ font-size: .78rem; margin-bottom: 4px; }
+      .stat-number{ font-size: 1.35rem; }
     }
 
+    /* Very small phones */
+    @media (max-width: 380px){
+      .hero-stats{
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+        gap: 8px;
+      }
+      .stat-item{ padding: 9px 6px; }
+      .stat-number{ font-size: 1.25rem; }
+      .stat-label{ font-size: .74rem; }
+    }
+
+    /* Safe-area bottom padding (iOS) */
     @supports (padding: max(0px)) {
       .container { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
