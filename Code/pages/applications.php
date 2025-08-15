@@ -17,6 +17,7 @@ function url_for(string $name, array $params = []): string {
         'applications.new'               => '/pages/new.php',
         'applications.list_applications' => '/pages/applications.php',
         'applications.set_status'        => '/pages/set_status.php',
+        'applications.detail'            => '/pages/application_detail.php', // <-- added
         'stats.stats'                    => '/pages/stats.php',
         'auth.logout'                    => '/auth/logout.php',
     ];
@@ -37,7 +38,7 @@ $q      = trim($_GET['q'] ?? '');
 /* ---------- fetch rows (scoped by user) ---------- */
 $rows = [];
 try {
-    // NOTE: alias `position` to avoid any collision with MySQL POSITION() function
+    // alias `position` for safety
     $sql = "SELECT id,
                    company,
                    `position` AS position_title,
@@ -53,7 +54,6 @@ try {
         $params[':status'] = $filter;
     }
     if ($q !== '') {
-        // backtick the column name here too
         $sql .= " AND (LOWER(company) LIKE :q_company OR LOWER(`position`) LIKE :q_position)";
         $like = '%' . mb_strtolower($q, 'UTF-8') . '%';
         $params[':q_company']  = $like;
@@ -115,7 +115,6 @@ ob_start();
   .title a{ color:#fff; text-decoration:none; }
   .title a:hover{ text-decoration:underline; }
 
-  /* Job type pill displayed between title and company */
   .jobtype{
     display:inline-block;
     margin:0 0 6px 0;
@@ -129,6 +128,8 @@ ob_start();
   }
 
   .company{ color:var(--muted); }
+  .company a{ color:var(--muted); text-decoration:none; }
+  .company a:hover{ color:var(--primary-light); text-decoration:underline; }
 
   .top-actions{ position:absolute; top:10px; right:10px; display:flex; gap:8px; }
 
@@ -139,12 +140,13 @@ ob_start();
   }
   .trash-btn:hover{ transform:translateY(-1px); filter:brightness(1.05); background:rgba(239,68,68,.18); }
 
-  .status-container{ display:flex; align-items:center; gap:10px; margin-top:12px }
+  .status-container{ display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
   .status-label{ color:var(--muted); font-size:.9rem; }
   .status-pill{ border:0; border-radius:999px; padding:6px 12px; font-weight:700; color:#fff; cursor:pointer; }
   .status-pill.pending{ background:#3b82f6; } .status-pill.interview{ background:#f59e0b; }
   .status-pill.accepted{ background:#10b981; } .status-pill.rejected{ background:#ef4444; }
   .status-pill.noanswer{ background:#64748b; }
+
   .dropdown-arrow{ font-size:12px; margin-left:6px; }
 
   .floating-menu{ position:fixed; z-index:9999; display:none; min-width:180px; padding:6px; background:var(--bg-light); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-lg); }
@@ -217,11 +219,17 @@ ob_start();
     <?php foreach ($rows as $r): ?>
       <?php
         $appId     = (int) v($r, 'id');
-        $href      = trim((string)($r['href'] ?? ''));
-        $safeHref  = (preg_match('~^https?://~i', $href)) ? $href : '';
         $status    = (string) v($r, 'status');
         $jobType   = (string) v($r, 'job_type');
-        $positionT = (string) v($r, 'position_title'); // <-- aliased field
+        $positionT = (string) v($r, 'position_title');
+        $company   = (string) v($r, 'company');
+
+        // internal detail page
+        $detailUrl = url_for('applications.detail', ['id' => $appId]);
+
+        // optional: company → LinkedIn search
+        $linkedinUrl = 'https://www.linkedin.com/search/results/companies/?keywords=' . rawurlencode($company);
+
         $returnUrl = $_SERVER['REQUEST_URI'] ?? '/pages/applications.php';
       ?>
       <div class="card">
@@ -234,20 +242,20 @@ ob_start();
         </div>
 
         <div class="title">
-          <?php if ($safeHref !== ''): ?>
-            <a href="<?= htmlspecialchars($safeHref) ?>" target="_blank" rel="noopener noreferrer">
-              <?= htmlspecialchars($positionT) ?>
-            </a>
-          <?php else: ?>
+          <a href="<?= htmlspecialchars($detailUrl) ?>">
             <?= htmlspecialchars($positionT) ?>
-          <?php endif; ?>
+          </a>
         </div>
 
         <?php if ($jobType !== ''): ?>
           <div class="jobtype"><?= htmlspecialchars($jobType) ?></div>
         <?php endif; ?>
 
-        <div class="company"><?= htmlspecialchars(v($r, 'company')) ?></div>
+        <div class="company">
+          <a href="<?= htmlspecialchars($linkedinUrl) ?>" target="_blank" rel="noopener noreferrer">
+            <?= htmlspecialchars($company) ?>
+          </a>
+        </div>
 
         <div class="status-container">
           <span class="status-label">Status:</span>
