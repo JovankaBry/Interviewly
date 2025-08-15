@@ -36,10 +36,8 @@ $q      = trim($_GET['q'] ?? '');
 
 /* ---------- fetch rows (scoped by user) ---------- */
 $rows = [];
-$hasHref = false;
 try {
-    $sql = "SELECT id, company, position, status,
-                   COALESCE(job_url, url, link, application_url) AS href
+    $sql = "SELECT id, company, position, status, job_link AS href
             FROM applications
             WHERE user_id = :uid";
     $params = [':uid' => $uid];
@@ -49,32 +47,17 @@ try {
         $params[':status'] = $filter;
     }
     if ($q !== '') {
-        $sql .= " AND (company LIKE :q OR position LIKE :q)";
-        $params[':q'] = '%' . $q . '%';
+        $sql .= " AND (LOWER(company) LIKE :q OR LOWER(position) LIKE :q)";
+        $params[':q'] = '%' . mb_strtolower($q, 'UTF-8') . '%';
     }
     $sql .= " ORDER BY created_at DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($rows as $r) { if (!empty($r['href'])) { $hasHref = true; break; } }
 } catch (Throwable $e) {
-    try {
-        $sql = "SELECT id, company, position, status
-                FROM applications
-                WHERE user_id = :uid";
-        $params = [':uid' => $uid];
-        if ($filter) { $sql .= " AND status = :status"; $params[':status'] = $filter; }
-        if ($q !== '') { $sql .= " AND (company LIKE :q OR position LIKE :q)"; $params[':q'] = '%' . $q . '%'; }
-        $sql .= " ORDER BY created_at DESC";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $hasHref = false;
-    } catch (Throwable $e2) {
-        $rows = [];
-        $load_error = 'Could not load applications: ' . $e2->getMessage();
-    }
+    $rows = [];
+    $load_error = 'Could not load applications: ' . $e->getMessage();
 }
 
 /* ---------- page ---------- */
@@ -89,7 +72,6 @@ ob_start();
     --radius:12px; --gap:16px; --ring: rgba(37,99,235,.35);
     --shadow-lg: 0 14px 30px rgba(0,0,0,.35);
     --shadow-sm: 0 8px 18px rgba(0,0,0,.25);
-    --danger:#ef4444;
   }
 
   .page-head{ border:1px solid var(--border); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); box-shadow: var(--shadow-sm); padding: 14px; margin-bottom: 16px; }
@@ -121,30 +103,32 @@ ob_start();
   .card{ position:relative; border:1px solid var(--border); border-radius: var(--radius); background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); box-shadow: var(--shadow-sm); padding: 14px; transition:.2s; }
   .card:hover{ transform: translateY(-2px); border-color: rgba(37,99,235,.35); box-shadow: var(--shadow-lg); }
 
-  /* clickable overlay when href exists */
-  .card-link{ position:absolute; inset:0; z-index:1; border-radius:inherit; }
-  .controls, .status-container, .trash-form{ position:relative; z-index:2; }
-
   .title{ font-weight:800; font-size:1.05rem; margin-bottom:4px }
+  .title a{ color:#fff; text-decoration:none; }
+  .title a:hover{ text-decoration:underline; }
   .company{ color: var(--muted); }
   .company:hover{ color: var(--primary-light); }
 
+  .top-actions{ position:absolute; top:10px; right:10px; display:flex; gap:8px; }
+
+  .trash-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:10px; border:1px solid rgba(239,68,68,.35);
+    background: rgba(239,68,68,.12); color:#fecaca; cursor:pointer; font-size:16px; font-weight:800;
+  }
+  .trash-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); background: rgba(239,68,68,.18); }
+
   .status-container{ display:flex; align-items:center; gap:10px; margin-top:12px }
   .status-label{ color: var(--muted); font-size:.9rem; }
-
   .status-pill{ border:0; border-radius:999px; padding:6px 12px; font-weight:700; color:#fff; cursor:pointer; }
   .status-pill.pending{ background:#3b82f6; } .status-pill.interview{ background:#f59e0b; }
   .status-pill.accepted{ background:#10b981; } .status-pill.rejected{ background:#ef4444; }
   .status-pill.noanswer{ background:#64748b; }
   .dropdown-arrow{ font-size:12px; margin-left:6px; }
 
-  .trash-form{ position:absolute; top:10px; right:10px; z-index:3; }
-  .trash-btn{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; border:1px solid rgba(239,68,68,.35); background: rgba(239,68,68,.12); color:#fecaca; cursor:pointer; font-size:16px; font-weight:800; transition:.15s; }
-  .trash-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); background: rgba(239,68,68,.18); }
-
   .floating-menu{ position:fixed; z-index:9999; display:none; min-width:180px; padding:6px; background:var(--bg-light); border:1px solid var(--border); border-radius:12px; box-shadow: var(--shadow-lg); }
   .floating-menu.show{ display:block; }
-  .status-option{ display:block; width:100%; margin:0 0 6px 0; padding:8px 12px; border:0; border-radius:10px; font-weight:700; text-align:left; color:#fff; cursor:pointer; transition:.15s; }
+  .status-option{ display:block; width:100%; margin:0 0 6px 0; padding:8px 12px; border:0; border-radius:10px; font-weight:700; text-align:left; color:#fff; cursor:pointer; }
   .status-option:last-child{ margin-bottom:0 }
   .status-option:hover{ transform: translateX(4px); filter: brightness(1.1); }
   .status-option.pending{ background:#3b82f6; } .status-option.interview{ background:#f59e0b; }
@@ -176,8 +160,8 @@ ob_start();
 
   <div class="head-actions">
     <form method="get" action="<?= htmlspecialchars(url_for('applications.list_applications')) ?>" class="search-group" role="search">
-      <input class="search-input" type="text" name="q" placeholder="Search company or position"
-             value="<?= htmlspecialchars($q) ?>" aria-label="Search company or position" inputmode="search" />
+      <input class="search-input" type="search" name="q" placeholder="Search company or position"
+             value="<?= htmlspecialchars($q) ?>" aria-label="Search company or position" />
       <?php if ($filter): ?><input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>"><?php endif; ?>
       <button class="search-btn" type="submit">Search</button>
     </form>
@@ -211,29 +195,35 @@ ob_start();
   <?php else: ?>
     <?php foreach ($rows as $r): ?>
       <?php
-        $appId = (int) v($r, 'id');
-        $href  = trim((string)($r['href'] ?? ''));
+        $appId    = (int) v($r, 'id');
+        $href     = trim((string)($r['href'] ?? ''));
         $safeHref = (preg_match('~^https?://~i', $href)) ? $href : '';
+        $status   = (string) v($r, 'status');
         $returnUrl = $_SERVER['REQUEST_URI'] ?? '/pages/applications.php';
       ?>
       <div class="card">
-        <?php if ($hasHref && $safeHref !== ''): ?>
-          <a class="card-link" href="<?= htmlspecialchars($safeHref) ?>" target="_blank" rel="noopener noreferrer" aria-label="Open application link"></a>
-        <?php endif; ?>
+        <div class="top-actions">
+          <form method="post" action="/includes/delete_application.php" onsubmit="return confirm('Delete this application? This cannot be undone.');">
+            <input type="hidden" name="app_id" value="<?= $appId ?>">
+            <input type="hidden" name="return" value="<?= htmlspecialchars($returnUrl) ?>">
+            <button type="submit" class="trash-btn" title="Delete">🗑</button>
+          </form>
+        </div>
 
-        <!-- Trash button -->
-        <form class="trash-form" method="post" action="/includes/delete_application.php" onsubmit="return confirm('Delete this application? This cannot be undone.');">
-          <input type="hidden" name="app_id" value="<?= $appId ?>">
-          <input type="hidden" name="return" value="<?= htmlspecialchars($returnUrl) ?>">
-          <button type="submit" class="trash-btn" title="Delete">🗑</button>
-        </form>
+        <div class="title">
+          <?php if ($safeHref !== ''): ?>
+            <a href="<?= htmlspecialchars($safeHref) ?>" target="_blank" rel="noopener noreferrer">
+              <?= htmlspecialchars(v($r, 'position')) ?>
+            </a>
+          <?php else: ?>
+            <?= htmlspecialchars(v($r, 'position')) ?>
+          <?php endif; ?>
+        </div>
 
-        <div class="title"><?= htmlspecialchars(v($r, 'position')) ?></div>
         <div class="company"><?= htmlspecialchars(v($r, 'company')) ?></div>
 
         <div class="status-container">
           <span class="status-label">Status:</span>
-          <?php $status = (string) v($r, 'status'); ?>
           <button
             class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
             type="button"
