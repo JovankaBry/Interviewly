@@ -107,7 +107,7 @@ ob_start();
   <label class="label">Job Type</label>
   <?php
     $types = [
-      'Full-time','Part-time','Internship','Working Student','Contract','Temporary','Freelance','Thesis','Other'
+      'Full-time','Career Entry','Part-time','Internship','Working Student','Contract','Temporary','Freelance','Thesis','Other'
     ];
     $selectedType = $_POST['job_type'] ?? '';
     $displayLabel = $selectedType !== '' ? $selectedType : '— Select —';
