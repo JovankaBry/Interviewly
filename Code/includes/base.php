@@ -122,7 +122,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     }
     .logo{ margin:0; font-weight:800; font-size:1.6rem; letter-spacing:.2px; }
     .logo a{ display:inline-flex; align-items:center; gap:10px; color:inherit; text-decoration:none; }
-    .logo img{ height:26px; width:26px; }
+    .logo img{ height:50px; width:50x; }
 
     .nav-links{
       display:flex; gap:8px; margin-left:6px;
