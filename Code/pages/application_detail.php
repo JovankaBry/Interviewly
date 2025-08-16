@@ -34,22 +34,13 @@ function v($row, $key) { return is_array($row) ? ($row[$key] ?? null) : ($row->$
 
 /* ---------- input ---------- */
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-if ($id <= 0) {
-  http_response_code(404);
-  echo "Application not found";
-  exit;
-}
+if ($id <= 0) { http_response_code(404); echo "Application not found"; exit; }
 
 /* ---------- fetch ---------- */
 $stmt = $pdo->prepare("SELECT * FROM applications WHERE id = :id AND user_id = :uid");
 $stmt->execute([':id' => $id, ':uid' => $uid]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$row) {
-  http_response_code(404);
-  echo "Application not found";
-  exit;
-}
+if (!$row) { http_response_code(404); echo "Application not found"; exit; }
 
 /* ---------- derived values ---------- */
 $position  = (string) (v($row, 'position') ?? '');
@@ -73,39 +64,66 @@ ob_start();
 ?>
 
 <style>
-  /* Page-specific tweaks only (rest uses style.css) */
-  .page-head{ border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-light); padding:16px; }
-  .page-title{ margin:0; font-size:1.4rem; font-weight:800; letter-spacing:.2px }
-  .pill-soft{
-    display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
-    border:1px solid var(--border); background:rgba(255,255,255,.04); color:#dbeafe; font-weight:700; font-size:.85rem;
+  /* Page-specific tweaks only (global theme is in style.css) */
+  .page-head{ border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-light); padding:16px; position:relative; }
+
+  /* Title + actions */
+  .title-line{ display:flex; flex-direction:column; gap:8px; }
+  @media (min-width:768px){
+    .title-line{ flex-direction:row; align-items:flex-start; justify-content:space-between; }
   }
+  .title-line h2{ margin:0; font-size:1.15rem; font-weight:800; line-height:1.25; }
+
+  .actions-top{ display:flex; gap:8px; }
+  @media (min-width:768px){
+    .actions-top{ position:absolute; top:12px; right:12px; }
+  }
+
+  .back-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:4px 8px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,.04); color:#fff; font-weight:700; font-size:.8rem; text-decoration:none;
+  }
+  .back-btn:hover{ transform:translateY(-1px); filter:brightness(1.04) }
+
+  .icon-btn{
+    width:32px; height:32px; padding:0; border-radius:10px; border:1px solid rgba(239,68,68,.35);
+    background:rgba(239,68,68,.12); color:#fecaca; display:inline-flex; align-items:center; justify-content:center;
+    font-size:16px; line-height:1; cursor:pointer; transition:transform .15s ease, filter .15s ease;
+  }
+  .icon-btn:hover{ transform:translateY(-1px); filter:brightness(1.05); background:rgba(239,68,68,.18); }
+
+  /* Clean mobile wrapping for jobType • company • location */
+  .info-line{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; color:var(--muted); margin-top:6px; }
+  .info-item{ display:inline-flex; align-items:center; }
+  .info-item:not(:first-child)::before{ content:"•"; color:var(--muted); margin:0 6px; }
+
+  .pill-soft{
+    display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+    border:1px solid var(--border); background:rgba(255,255,255,.04);
+    color:#dbeafe; font-weight:700; font-size:.8rem;
+  }
+  .info-link{ color:inherit; text-decoration:none }
+  .info-link:hover{ color:var(--primary); text-decoration:underline }
+
+  .status-container{ display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .status-label{ color:var(--muted); font-size:14px }
+
+  /* Make the job link EXACTLY like status pill */
+  .status-pill.linkpill{ background:var(--primary); border:0; text-decoration:none; }
+
   .meta-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
   @media (max-width:640px){ .meta-grid{ grid-template-columns: 1fr } }
   .meta-item{ background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:var(--radius); padding:12px }
   .meta-label{ color:var(--muted); font-size:.85rem; margin-bottom:4px }
   .meta-value{ font-weight:700 }
+
   .notes-box{
     white-space:pre-wrap; background:rgba(255,255,255,.03); border:1px solid var(--border);
     border-radius:var(--radius); padding:12px; min-height:64px
   }
-  .actions{ display:flex; gap:var(--gap); flex-wrap:wrap }
-  .btn-small{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 14px; border-radius:var(--radius); font-weight:700; border:1px solid var(--border);
-    background:rgba(255,255,255,.04); color:#fff; text-decoration:none;
-  }
-  .btn-small.primary{ background:var(--primary); border-color:transparent }
-  .btn-small.danger{ background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35); color:#fecaca }
-  .btn-small:hover{ transform:translateY(-1px); filter:brightness(1.04) }
-  .top-right{ position:absolute; top:12px; right:12px; display:flex; gap:8px }
-  .title-line{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px }
-  .title-line h2{ margin:0; font-size:1.25rem; font-weight:800 }
-  .company-line{ display:flex; align-items:center; gap:10px; color:var(--muted) }
-  .company-line a{ color:inherit; text-decoration:none }
-  .company-line a:hover{ color:var(--primary) ; text-decoration:underline }
-  .section-title{ margin:0 0 8px 0; font-weight:700; font-size:18px }
-  /* floating status menu (reuse list page behavior) */
+
+  /* Floating status menu */
   .floating-menu{ position:fixed; z-index:2000; display:none; min-width:180px; padding:6px; background:var(--bg-light); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 8px 16px rgba(0,0,0,.25); }
   .floating-menu.show{ display:block; }
   .floating-menu .status-option{ display:block; width:100%; margin:0 0 6px 0; padding:8px 12px; border:0; border-radius:var(--radius); font-weight:600; text-align:left; color:#fff; cursor:pointer; transition:transform .2s ease, filter .2s ease; }
@@ -119,44 +137,49 @@ ob_start();
 <div class="page-head card">
   <div class="title-line">
     <h2><?= htmlspecialchars($position ?: 'Untitled position') ?></h2>
-    <div class="top-right">
-      <!-- Delete -->
+
+    <div class="actions-top">
+      <!-- Trash (icon only) -->
       <form method="post" action="/includes/delete_application.php" onsubmit="return confirm('Delete this application? This cannot be undone.');">
         <input type="hidden" name="app_id" value="<?= (int)$id ?>">
         <input type="hidden" name="return" value="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">
-        <button type="submit" class="btn-small danger">🗑 Delete</button>
+        <button type="submit" class="icon-btn" title="Delete" aria-label="Delete">🗑</button>
       </form>
-      <!-- Back -->
-      <a class="btn-small" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">← Back</a>
+
+      <!-- Back (compact) -->
+      <a class="back-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">← Back</a>
     </div>
   </div>
 
-  <div class="company-line">
+  <div class="info-line">
     <?php if ($jobType !== ''): ?>
-      <span class="pill-soft"><?= htmlspecialchars($jobType) ?></span>
+      <span class="pill-soft info-item"><?= htmlspecialchars($jobType) ?></span>
     <?php endif; ?>
     <?php if ($company !== ''): ?>
-      <span>•</span>
-      <a href="<?= htmlspecialchars($companyLinkedIn) ?>" target="_blank" rel="noopener noreferrer">
-        <?= htmlspecialchars($company) ?> <span class="company-arrow">→</span>
+      <a class="info-item info-link" href="<?= htmlspecialchars($companyLinkedIn) ?>" target="_blank" rel="noopener noreferrer">
+        <?= htmlspecialchars($company) ?>
       </a>
     <?php endif; ?>
     <?php if ($location !== ''): ?>
-      <span>•</span>
-      <span><?= htmlspecialchars($location) ?></span>
+      <span class="info-item"><?= htmlspecialchars($location) ?></span>
     <?php endif; ?>
   </div>
 
-  <div class="status-container" style="margin-top:12px;">
+  <div class="status-container">
     <span class="status-label">Status:</span>
+
     <button
       class="status-pill <?= strtolower(str_replace(' ', '', $status)) ?>"
       type="button"
       onclick="openStatusMenu('<?= (int)$id ?>', this, event)">
       <?= htmlspecialchars($status) ?> <span class="dropdown-arrow">▼</span>
     </button>
+
     <?php if ($jobLink): ?>
-      <a class="btn-small primary" href="<?= htmlspecialchars($jobLink) ?>" target="_blank" rel="noopener noreferrer">Open Job Link ↗</a>
+      <!-- EXACT same bubble as status using status-pill base -->
+      <a class="status-pill linkpill" href="<?= htmlspecialchars($jobLink) ?>" target="_blank" rel="noopener noreferrer">
+        Open Job Link ↗
+      </a>
     <?php endif; ?>
   </div>
 </div>
@@ -212,9 +235,9 @@ ob_start();
   <h3 class="section-title">Notes</h3>
   <div class="notes-box"><?= $notes === '' ? '<span class="muted">No notes yet.</span>' : nl2br(htmlspecialchars($notes)) ?></div>
   <div class="actions" style="margin-top:12px;">
-    <a class="btn-small" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">Back to list</a>
+    <a class="back-btn" href="<?= htmlspecialchars(url_for('applications.list_applications')) ?>">← Back to list</a>
     <?php if ($jobLink): ?>
-      <a class="btn-small primary" href="<?= htmlspecialchars($jobLink) ?>" target="_blank" rel="noopener noreferrer">Open Job Link</a>
+      <a class="status-pill linkpill" href="<?= htmlspecialchars($jobLink) ?>" target="_blank" rel="noopener noreferrer">Open Job Link</a>
     <?php endif; ?>
   </div>
 </div>
@@ -236,7 +259,6 @@ ob_start();
 </div>
 
 <script>
-  // Reuse the floating menu behavior from the list page
   (function(){
     const menu = document.getElementById('status-menu');
     if (menu && menu.parentNode !== document.body) document.body.appendChild(menu);
