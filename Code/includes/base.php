@@ -43,7 +43,7 @@ if (!function_exists('is_active')) {
 /* ---- defaults ---- */
 $counts  = $counts  ?? null;
 $total   = $total   ?? null;
-$title   = $title   ?? 'Interviewly - Job Application Tracker';
+$title   = $title   ?? 'Tracklly - Job Application Tracker';
 $content = $content ?? '';
 
 $me  = $_SESSION['user'] ?? null;
@@ -169,7 +169,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       max-width: 60vw;
     }
 
-    .btn, .btn-outline{
+    .btn, .btn-outline, .btn-logout{
       display:flex; align-items:center; justify-content:center;
       height: var(--nav-control-h);
       padding: 0 14px;
@@ -179,6 +179,17 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     }
     .btn{ background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color:#fff; }
     .btn-outline{ color:#fff; background: rgba(255,255,255,.03); border-color: var(--border); }
+
+    /* red logout button */
+    .btn-logout{
+      background: linear-gradient(180deg, #dc2626, #b91c1c);
+      border:1px solid rgba(220,38,38,.4);
+      color:#fff;
+    }
+    .btn-logout:hover{
+      background: linear-gradient(180deg, #ef4444, #dc2626);
+      box-shadow: 0 6px 14px rgba(220,38,38,.4);
+    }
 
     /* ===== HERO ===== */
     .hero{
@@ -201,12 +212,52 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     .main-content{ margin-top: 16px; border:1px solid var(--border); border-radius: var(--radius); padding:16px; background: rgba(255,255,255,.03); box-shadow: 0 12px 28px rgba(0,0,0,.28); }
     .main-footer{ text-align:center; color:var(--muted); padding:18px 10px 8px; font-size:.9rem; }
 
+    /* Follow / Social icons */
+    .social-wrap{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+    .social-title{
+      margin:0;
+      font-weight:700;
+      color:#e5e7eb;
+      font-size:.95rem;
+    }
+    .social-icons{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:36px; height:36px;
+      border-radius:50%;
+      background: #0b1222;
+      border:1px solid var(--border);
+      text-decoration:none;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .icon-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,.35);
+      background: linear-gradient(180deg, #25f4ee, #fe2c55);
+    }
+    .icon-btn img{
+      width:18px; height:18px;
+      display:block;
+      filter: brightness(1) contrast(1.05);
+    }
+
     /* ======= Mobile tweaks ======= */
     @media (max-width: 640px){
       :root{ --nav-control-h: 34px; }
       .main-nav{ gap:10px; }
 
-      /* nav-links centered on mobile */
       .nav-links{
         order: 2;
         width: 100%;
@@ -223,7 +274,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
         gap: 8px;
       }
       .nav-auth .greeting{ font-size: .95rem; max-width: calc(100% - 110px); }
-      .btn, .btn-outline{ padding: 0 12px; height: 34px; }
+      .btn, .btn-outline, .btn-logout{ padding: 0 12px; height: 34px; }
 
       .hero{ padding: 12px 12px; }
       .subtitle{ font-size: .95rem; margin-bottom: 10px; }
@@ -252,8 +303,8 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       <nav class="main-nav" aria-label="Primary">
         <h1 class="logo">
           <a href="<?= htmlspecialchars(url_for('home.home')) ?>">
-            <img src="/static/images/icon2.png" alt="Interviewly logo">
-            Interviewly
+            <img src="/static/images/icon2.png" alt="Tracklly logo">
+            Tracklly
           </a>
         </h1>
 
@@ -272,7 +323,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
         <div class="nav-auth">
           <?php if (!empty($me)): ?>
             <span class="greeting">Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?></span>
-            <a class="btn-outline" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
+            <a class="btn-logout" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
           <?php else: ?>
             <?php $loginUrl = url_for('auth.login', ['next' => $_SERVER['REQUEST_URI'] ?? '/index.php']); ?>
             <a class="btn" href="<?= htmlspecialchars($loginUrl) ?>">Login</a>
@@ -304,7 +355,17 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
     </main>
 
     <footer class="main-footer">
-      <p>&copy; <?= date('Y') ?> Interviewly. All rights reserved.</p>
+      <p>&copy; <?= date('Y') ?> Tracklly. All rights reserved.</p>
+
+      <div class="social-wrap" aria-label="Follow us">
+        <p class="social-title">Follow us</p>
+        <div class="social-icons">
+          <!-- TikTok -->
+          <a class="icon-btn" href="https://www.tiktok.com/@tracklly" target="_blank" rel="noopener" aria-label="Follow us on TikTok">
+            <img src="/static/images/tiktok.png" alt="TikTok">
+          </a>
+        </div>
+      </div>
     </footer>
   </div>
 </body>
