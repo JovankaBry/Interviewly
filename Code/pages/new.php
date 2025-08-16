@@ -13,7 +13,7 @@ require_once __DIR__ . '/../api/db.php'; // provides $pdo
 /* ---------- helpers ---------- */
 function url_for(string $name, array $params = []): string {
     $map = [
-        'home.home'                      => '/index.php',
+        'home.home'                      => '/pages/home.php',
         'applications.new'               => '/pages/new.php',
         'applications.list_applications' => '/pages/applications.php',
         'applications.set_status'        => '/pages/set_status.php',

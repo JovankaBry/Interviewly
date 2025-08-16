@@ -13,7 +13,7 @@ if (file_exists(__DIR__ . '/../auth/auth.php')) {
 if (!function_exists('url_for')) {
   function url_for(string $name, array $params = []): string {
       $map = [
-          'home.home'                      => '/index.php',
+          'home.home'                      => '/pages/home.php',   // ← go to home.php
           'applications.list_applications' => '/pages/applications.php',
           'applications.new'               => '/pages/new.php',
           'applications.set_status'        => '/pages/set_status.php',
@@ -35,7 +35,8 @@ if (!function_exists('is_active')) {
   function is_active(string $endpoint): bool {
       $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
       $target = url_for($endpoint);
-      if ($endpoint === 'home.home') return $uri === '/' || $uri === '/index.php';
+      // Home should be active ONLY on /pages/home.php
+      if ($endpoint === 'home.home') return $uri === '/pages/home.php';
       return $uri === $target;
   }
 }
@@ -95,7 +96,6 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       --radius:14px;
       --radius-sm:10px;
       --card-bg:rgba(255,255,255,0.03);
-
       --nav-control-h: 36px;
     }
 
@@ -325,7 +325,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
             <span class="greeting">Hello, <?= htmlspecialchars($me['username'] ?? $me['email'] ?? 'User') ?></span>
             <a class="btn-logout" href="<?= htmlspecialchars(url_for('auth.logout')) ?>">Logout</a>
           <?php else: ?>
-            <?php $loginUrl = url_for('auth.login', ['next' => $_SERVER['REQUEST_URI'] ?? '/index.php']); ?>
+            <?php $loginUrl = url_for('auth.login', ['next' => $_SERVER['REQUEST_URI'] ?? '/pages/home.php']); ?>
             <a class="btn" href="<?= htmlspecialchars($loginUrl) ?>">Login</a>
           <?php endif; ?>
         </div>
@@ -363,6 +363,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
           <!-- TikTok -->
           <a class="icon-btn" href="https://www.tiktok.com/@tracklly" target="_blank" rel="noopener" aria-label="Follow us on TikTok">
             <img src="/static/images/tiktok.png" alt="TikTok">
+          </a>
           <!-- Instagram -->
           <a class="icon-btn" href="https://www.instagram.com/tracklly/" target="_blank" rel="noopener" aria-label="Follow us on Instagram">
             <img src="/static/images/instagram.png" alt="Instagram">
