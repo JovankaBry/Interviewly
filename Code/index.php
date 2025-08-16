@@ -1,5 +1,5 @@
 <?php
-// /index.php — Tracklly landing w/ Feedback + sticky header + animated "saasy-dark" reveals
+// /index.php — Tracklly landing w/ Feedback + sticky header + animated reveals + clean mobile nav
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -105,8 +105,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       --bg:#0b0f1a; --bg2:#0a1220; --panel:#0f1626; --muted:#9aa4b2; --text:#eaf2ff;
       --border:#1e2a3b; --primary:#3b82f6; --primary-2:#2563eb;
       --radius:16px; --radius-sm:12px; --nav-h:64px;
-      --e1: cubic-bezier(.22,.61,.36,1); /* snappy ease */
-      --e2: cubic-bezier(.16,1,.3,1);    /* over-shoot ease */
+      --e1: cubic-bezier(.22,.61,.36,1);
+      --e2: cubic-bezier(.16,1,.3,1);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -122,37 +122,57 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
 
     /* --- Header (sticky) --- */
     .nav{
-      position:sticky; top:0; z-index:100;
-      display:flex; align-items:center; justify-content:space-between; gap:16px;
-      height:var(--nav-h); padding:12px 20px;
+      position:sticky; top:0; z-index:120;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      height:var(--nav-h); padding:10px 14px;
       background:rgba(10,18,32,.72); backdrop-filter:blur(10px);
       border-bottom:1px solid var(--border);
       transition:background .25s var(--e1), box-shadow .25s var(--e1);
     }
-    .nav.scrolled{background:rgba(10,18,32,.82); box-shadow:0 2px 20px rgba(0,0,0,.35)}
-    .brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:.2px}
-    .brand img{width:42px;height:42px;border-radius:10px}
-    .links{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+    .nav.scrolled{background:rgba(10,18,32,.85); box-shadow:0 2px 20px rgba(0,0,0,.35)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px}
+    .brand img{width:40px;height:40px;border-radius:10px}
+
+    .links{display:flex;gap:14px;align-items:center}
     .link{
       padding:8px 12px;border-radius:12px;color:var(--muted);font-weight:700;
       border:1px solid transparent; transition:.2s var(--e1);
+      white-space:nowrap;
     }
     .link:hover{background:rgba(255,255,255,.06);color:#fff}
-    .link.active{
-      color:#fff; background:#0b1222; border-color:var(--border);
-      box-shadow: inset 0 0 0 1px rgba(59,130,246,.18), 0 2px 8px rgba(0,0,0,.25);
-    }
-    .actions{display:flex;gap:10px}
+    .link.active{color:#fff; background:#0b1222; border-color:var(--border);
+      box-shadow: inset 0 0 0 1px rgba(59,130,246,.18), 0 2px 8px rgba(0,0,0,.25);}
+
+    .actions{display:flex;gap:8px;align-items:center}
     .btn,.btn-outline{
       display:inline-flex;align-items:center;justify-content:center;
-      padding:10px 16px;border-radius:12px;font-weight:800;border:1px solid rgba(255,255,255,.06);
-      transition: transform .18s var(--e2), filter .18s var(--e2)
+      padding:10px 14px;border-radius:12px;font-weight:800;border:1px solid rgba(255,255,255,.06);
+      transition: transform .18s var(--e2), filter .18s var(--e2); white-space:nowrap;
     }
     .btn{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#fff}
     .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
     .btn:active{transform:translateY(0)}
     .btn-outline{background:rgba(255,255,255,.04);border-color:var(--border);color:#fff}
     .btn-outline:hover{transform:translateY(-1px);filter:brightness(1.08)}
+
+    /* Mobile nav trigger */
+    .nav-toggle{
+      display:none; width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+      background:#0b1222; color:#fff; align-items:center; justify-content:center;
+      font-weight:900; line-height:1; cursor:pointer;font-size: 25px;
+    }
+
+    /* Mobile drawer */
+    .mobile-menu{
+      position:fixed; z-index:110; left:0; right:0; top:var(--nav-h);
+      background:rgba(10,18,32,.98); backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+      transform: translateY(-12px); opacity:0; pointer-events:none;
+      transition: transform .25s var(--e1), opacity .25s var(--e1);
+    }
+    .mobile-menu.open{transform:none; opacity:1; pointer-events:auto}
+    .mobile-links{display:flex; gap:8px; padding:10px; overflow-x:auto}
+    .mobile-links .link{padding:10px 12px}
 
     /* --- Sections --- */
     .section{padding:64px 20px; scroll-margin-top:calc(var(--nav-h) + 12px);}
@@ -237,16 +257,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
     .icon-btn{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;background:#0b1222;border:1px solid var(--border);transition:.15s transform,.15s box-shadow,.15s filter}
     .icon-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.35);filter:brightness(1.05)}
     .icon-btn img{width:22px;height:22px;display:block}
+
+    /* ===== Mobile tweaks ===== */
+    @media (max-width: 860px){
+      .links{display:none}
+      .nav-toggle{display:inline-flex}
+      .actions .btn-outline{display:none} /* hide Admin outline in header on very small screens */
+      .nav{height:56px; padding:8px 12px}
+      .section{padding:48px 16px}
+      .title{font-size:32px}
+      .btn, .btn-outline{padding:9px 12px;border-radius:10px}
+      .kicker{font-size:.8rem}
+    }
   </style>
 </head>
 <body>
 
   <!-- Header -->
   <header class="nav" id="site-nav">
-    <a class="brand reveal-left is-inview" href="/">
+    <a class="brand" href="/">
       <img src="/static/images/icon2.png" alt="Tracklly">
       <span>Tracklly</span>
     </a>
+
+    <!-- Desktop links -->
     <nav class="links" aria-label="Main">
       <a class="link" href="#about"    data-target="about">About</a>
       <a class="link" href="#previews" data-target="previews">Previews</a>
@@ -254,8 +288,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       <a class="link" href="#pricing"  data-target="pricing">Pricing</a>
       <a class="link" href="#faq"      data-target="faq">FAQ</a>
       <a class="link" href="#feedback" data-target="feedback">Feedback</a>
+      <?php if ($is_logged_in && function_exists('is_admin') && is_admin()): ?>
+        <a class="link" href="/pages/admin/index.php">Admin</a>
+      <?php endif; ?>
     </nav>
-    <div class="actions reveal-right is-inview">
+
+    <!-- Right actions -->
+    <div class="actions">
+      <!-- Mobile hamburger -->
+      <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">≡</button>
+
       <?php if ($is_logged_in): ?>
         <?php if (function_exists('is_admin') && is_admin()): ?>
           <a class="btn-outline" href="/pages/admin/index.php">Admin</a>
@@ -267,7 +309,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       <?php endif; ?>
     </div>
   </header>
-  
+
+  <!-- Mobile drawer -->
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-links" aria-label="Mobile navigation">
+      <a class="link" href="#about"    data-target="about">About</a>
+      <a class="link" href="#previews" data-target="previews">Previews</a>
+      <a class="link" href="#features" data-target="features">Features</a>
+      <a class="link" href="#pricing"  data-target="pricing">Pricing</a>
+      <a class="link" href="#faq"      data-target="faq">FAQ</a>
+      <a class="link" href="#feedback" data-target="feedback">Feedback</a>
+      <?php if ($is_logged_in && function_exists('is_admin') && is_admin()): ?>
+        <a class="link" href="/pages/admin/index.php">Admin</a>
+      <?php endif; ?>
+    </div>
+  </div>
+
   <!-- HERO -->
   <section class="section" id="about">
     <div class="limiter hero">
@@ -307,52 +364,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       </p>
 
       <div class="grid3">
-        <!-- Applications -->
         <div class="card reveal">
-          <div class="decor">
-            <div class="canvas shot parallax" data-parallax="6">
-              <?php if ($app_src): ?>
-                <img src="<?= htmlspecialchars($app_src) ?>" alt="Applications preview">
-              <?php else: ?><div class="ph">Applications preview</div><?php endif; ?>
-            </div>
-          </div>
+          <div class="decor"><div class="canvas shot parallax" data-parallax="6">
+            <?php if ($app_src): ?><img src="<?= htmlspecialchars($app_src) ?>" alt="Applications preview"><?php else: ?><div class="ph">Applications preview</div><?php endif; ?>
+          </div></div>
           <div class="label">Applications</div>
-          <p class="muted">
-            Add new roles, search instantly, and switch filters for Pending, Interview, Accepted, Rejected or No Answer.
-            Save job link, source, location, salary range and notes for each application.
-          </p>
+          <p class="muted">Add new roles, search instantly, and switch filters for Pending, Interview, Accepted, Rejected or No Answer. Save job link, source, location, salary range and notes for each application.</p>
         </div>
 
-        <!-- Dashboard -->
         <div class="card reveal delay-1">
-          <div class="decor">
-            <div class="canvas shot parallax" data-parallax="6">
-              <?php if ($dash_src): ?>
-                <img src="<?= htmlspecialchars($dash_src) ?>" alt="Dashboard preview">
-              <?php else: ?><div class="ph">Dashboard preview</div><?php endif; ?>
-            </div>
-          </div>
+          <div class="decor"><div class="canvas shot parallax" data-parallax="6">
+            <?php if ($dash_src): ?><img src="<?= htmlspecialchars($dash_src) ?>" alt="Dashboard preview"><?php else: ?><div class="ph">Dashboard preview</div><?php endif; ?>
+          </div></div>
           <div class="label">Dashboard</div>
-          <p class="muted">
-            See totals (offers, interviews, all applications), success rate, and recent activity—so you always know
-            what moved last and where to focus next.
-          </p>
+          <p class="muted">See totals (offers, interviews, all applications), success rate, and recent activity—so you always know what moved last and where to focus next.</p>
         </div>
 
-        <!-- Stats -->
         <div class="card reveal delay-2">
-          <div class="decor">
-            <div class="canvas shot parallax" data-parallax="6">
-              <?php if ($stats_src): ?>
-                <img src="<?= htmlspecialchars($stats_src) ?>" alt="Stats preview">
-              <?php else: ?><div class="ph">Stats preview</div><?php endif; ?>
-            </div>
-          </div>
+          <div class="decor"><div class="canvas shot parallax" data-parallax="6">
+            <?php if ($stats_src): ?><img src="<?= htmlspecialchars($stats_src) ?>" alt="Stats preview"><?php else: ?><div class="ph">Stats preview</div><?php endif; ?>
+          </div></div>
           <div class="label">Stats</div>
-          <p class="muted">
-            Bar and pie charts by status help you spot trends—how many interviews you’re landing and how your pipeline
-            is distributed across stages.
-          </p>
+          <p class="muted">Bar and pie charts by status help you spot trends—how many interviews you’re landing and how your pipeline is distributed across stages.</p>
         </div>
       </div>
     </div>
@@ -436,40 +469,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
     <div class="limiter faq">
       <h2 class="title reveal" style="font-size:28px;margin:0 0 10px 0;">FAQ</h2>
 
-      <div class="qa reveal">
-        <h4>Is Tracklly really free?</h4>
-        <p class="muted">Yes. Track as many applications as you want for $0/month.</p>
-      </div>
-
-      <div class="qa reveal delay-1">
-        <h4>What statuses can I use?</h4>
-        <p class="muted">You can switch between Pending, Interview, Accepted, Rejected, and No Answer at any time.</p>
-      </div>
-
-      <div class="qa reveal delay-2">
-        <h4>What information can I save for each application?</h4>
-        <p class="muted">Company, position, job type, location, job link, source (e.g., LinkedIn), salary range, notes, and a Next Action Date for follow-ups.</p>
-      </div>
-
-      <div class="qa reveal">
-        <h4>How do the stats work?</h4>
-        <p class="muted">The Dashboard shows totals and success rate. The Stats page summarizes your pipeline with bar and pie charts by status.</p>
-      </div>
-
-      <div class="qa reveal delay-1">
-        <h4>Do I need to install anything?</h4>
-        <p class="muted">No. Tracklly runs in your browser on desktop and mobile—no downloads required.</p>
-      </div>
-
-      <div class="qa reveal delay-2">
-        <h4>Can I export my data?</h4>
-        <p class="muted">CSV export is on the roadmap. For now, copy/paste works well for lists and notes.</p>
-      </div>
-
-      <div class="qa reveal">
-        <h4>Is my data private?</h4>
-        <p class="muted">Your data stays in your account. Avoid sharing login credentials with others to keep it secure.</p>
-      </div>
+      <div class="qa reveal"><h4>Is Tracklly really free?</h4><p class="muted">Yes. Track as many applications as you want for $0/month.</p></div>
+      <div class="qa reveal delay-1"><h4>What statuses can I use?</h4><p class="muted">You can switch between Pending, Interview, Accepted, Rejected, and No Answer at any time.</p></div>
+      <div class="qa reveal delay-2"><h4>What information can I save for each application?</h4><p class="muted">Company, position, job type, location, job link, source (e.g., LinkedIn), salary range, notes, and a Next Action Date for follow-ups.</p></div>
+      <div class="qa reveal"><h4>How do the stats work?</h4><p class="muted">The Dashboard shows totals and success rate. The Stats page summarizes your pipeline with bar and pie charts by status.</p></div>
+      <div class="qa reveal delay-1"><h4>Do I need to install anything?</h4><p class="muted">No. Tracklly runs in your browser on desktop and mobile—no downloads required.</p></div>
+      <div class="qa reveal delay-2"><h4>Can I export my data?</h4><p class="muted">CSV export is on the roadmap. For now, copy/paste works well for lists and notes.</p></div>
+      <div class="qa reveal"><h4>Is my data private?</h4><p class="muted">Your data stays in your account. Avoid sharing login credentials with others to keep it secure.</p></div>
     </div>
   </section>
 
@@ -534,18 +540,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
         const id=a.getAttribute('href').slice(1);
         const el=document.getElementById(id);
         if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth',block:'start'})}
+        // close mobile menu after tap
+        closeMenu();
       })
     });
 
     // Nav: active highlight + header shade
     const nav = document.getElementById('site-nav');
     const sectionIds = ['about','previews','features','pricing','faq','feedback'];
-    const links = new Map([...document.querySelectorAll('.links .link')].map(l => [l.dataset.target, l]));
+    const desktopLinks = new Map([...document.querySelectorAll('.links .link')].map(l => [l.dataset.target, l]));
+    const mobileLinks  = new Map([...document.querySelectorAll('.mobile-links .link')].map(l => [l.dataset.target, l]));
 
     function setActive(id){
-      links.forEach(el=>el.classList.remove('active'));
-      const el = links.get(id);
-      if (el) el.classList.add('active');
+      desktopLinks.forEach(el=>el && el.classList.remove('active'));
+      mobileLinks.forEach(el=>el && el.classList.remove('active'));
+      const d = desktopLinks.get(id); if (d) d.classList.add('active');
+      const m = mobileLinks.get(id);  if (m) m.classList.add('active');
     }
     const observer = new IntersectionObserver((entries)=>{
       let best = null;
@@ -578,6 +588,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
         el.style.transform = `translate3d(${x*amt}px, ${y*amt}px, 0)`;
       });
     }, {passive:true});
+
+    // Mobile menu toggle
+    const toggleBtn = document.getElementById('nav-toggle');
+    const menu = document.getElementById('mobile-menu');
+    const closeMenu = ()=>{ menu.classList.remove('open'); menu.setAttribute('aria-hidden','true'); };
+    const openMenu  = ()=>{ menu.classList.add('open'); menu.setAttribute('aria-hidden','false'); };
+
+    toggleBtn.addEventListener('click', ()=>{
+      if(menu.classList.contains('open')) closeMenu(); else openMenu();
+    });
+    // close on scroll start
+    window.addEventListener('scroll', closeMenu, {passive:true});
 
     // Keep focus in feedback after submit if errors
     if (location.hash === '#feedback') {
