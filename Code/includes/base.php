@@ -363,6 +363,9 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
           <!-- TikTok -->
           <a class="icon-btn" href="https://www.tiktok.com/@tracklly" target="_blank" rel="noopener" aria-label="Follow us on TikTok">
             <img src="/static/images/tiktok.png" alt="TikTok">
+          <!-- Instagram -->
+          <a class="icon-btn" href="https://www.instagram.com/tracklly/" target="_blank" rel="noopener" aria-label="Follow us on Instagram">
+            <img src="/static/images/instagram.png" alt="Instagram">
           </a>
         </div>
       </div>
