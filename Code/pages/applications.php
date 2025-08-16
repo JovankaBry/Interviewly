@@ -20,6 +20,7 @@ function url_for(string $name, array $params = []): string {
         'applications.detail'            => '/pages/application_detail.php', // <-- added
         'stats.stats'                    => '/pages/stats.php',
         'auth.logout'                    => '/auth/logout.php',
+        'admin.index'                    => '/pages/admin/index.php',
     ];
     $path = $map[$name] ?? '#';
     if ($params) {

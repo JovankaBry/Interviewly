@@ -20,6 +20,7 @@ if (!function_exists('url_for')) {
           'stats.stats'                    => '/pages/stats.php',
           'auth.login'                     => '/auth/login.php',
           'auth.logout'                    => '/auth/logout.php',
+          'admin.index'                    => '/pages/admin/index.php',
       ];
       $path = $map[$name] ?? '#';
       if ($params) {
@@ -318,6 +319,13 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
           <a href="<?= htmlspecialchars(url_for('stats.stats')) ?>"
              class="nav-link <?= is_active('stats.stats') ? 'active' : '' ?>"
              <?= is_active('stats.stats') ? 'aria-current="page"' : '' ?>>Stats</a>
+
+          <?php if (function_exists('is_admin') && is_admin()): ?>
+            <!-- ✅ Admin button (only for admins) -->
+            <a href="<?= htmlspecialchars(url_for('admin.index')) ?>"
+               class="nav-link <?= is_active('admin.index') ? 'active' : '' ?>"
+               <?= is_active('admin.index') ? 'aria-current="page"' : '' ?>>Admin</a>
+          <?php endif; ?>
         </div>
 
         <div class="nav-auth">

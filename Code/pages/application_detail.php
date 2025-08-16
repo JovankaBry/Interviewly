@@ -21,6 +21,7 @@ if (!function_exists('url_for')) {
           'applications.new'               => '/pages/new.php',
           'stats.stats'                    => '/pages/stats.php',
           'auth.logout'                    => '/auth/logout.php',
+          'admin.index'                    => '/pages/admin/index.php',
       ];
       $path = $map[$name] ?? '#';
       if ($params) {
