@@ -96,7 +96,6 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       --radius-sm:10px;
       --card-bg:rgba(255,255,255,0.03);
 
-      /* unify height for greeting + logout */
       --nav-control-h: 36px;
     }
 
@@ -119,6 +118,7 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       display:flex; align-items:center; gap:12px;
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
     }
     .logo{ margin:0; font-weight:800; font-size:1.6rem; letter-spacing:.2px; }
     .logo a{ display:inline-flex; align-items:center; gap:10px; color:inherit; text-decoration:none; }
@@ -147,12 +147,13 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 8px 20px rgba(37,99,235,.22);
     }
 
-    /* AUTH — perfect vertical centering beside Logout */
+    /* AUTH */
     .nav-auth{
       margin-left:auto;
       display:flex;
       align-items:center;
       gap:12px;
+      min-width: 0;
     }
     .nav-auth .greeting{
       display:flex; align-items:center;
@@ -162,6 +163,10 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       font-size: 1.05rem;
       font-weight: 500;
       padding: 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60vw;
     }
 
     .btn, .btn-outline{
@@ -170,94 +175,72 @@ $counts = array_merge(['Accepted'=>0,'Interview'=>0,'Pending'=>0,'Rejected'=>0,'
       padding: 0 14px;
       border-radius:10px; font-weight:800; text-decoration:none;
       border:1px solid rgba(255,255,255,.06);
+      flex: 0 0 auto;
     }
     .btn{ background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color:#fff; }
     .btn-outline{ color:#fff; background: rgba(255,255,255,.03); border-color: var(--border); }
 
-    /* ===== HERO (subtitle + counters) ===== */
+    /* ===== HERO ===== */
     .hero{
       padding: 18px 16px;
       background: var(--card-bg);
       border-top: 1px solid var(--border);
     }
-    .subtitle{
-      margin: 0 0 14px 0;
-      font-size:1.05rem;
-      color:#e9efff;
-    }
-
-    /* Desktop/tablet default: row layout */
+    .subtitle{ margin: 0 0 14px 0; font-size:1.05rem; color:#e9efff; }
     .hero-stats{
-      display:flex;
-      gap:14px;
-      flex-wrap:wrap;
-      justify-content:flex-start;
+      display:flex; gap:14px; flex-wrap:wrap; justify-content:flex-start;
     }
     .stat-item{
-      min-width:140px;
-      padding:16px 18px;
-      border-radius: var(--radius-sm);
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.035);
-      text-align: center;
+      min-width:140px; padding:16px 18px;
+      border-radius: var(--radius-sm); border:1px solid var(--border);
+      background: rgba(255,255,255,.035); text-align: center;
     }
-    .stat-label{
-      color: var(--muted);
-      font-size:.9rem;
-      text-transform: uppercase;
-      letter-spacing:.3px;
-      margin-bottom:6px;
-      display:block;
-    }
-    .stat-number{
-      font-size:1.9rem;
-      font-weight:800;
-      display:block;
-    }
+    .stat-label{ color: var(--muted); font-size:.9rem; text-transform: uppercase; letter-spacing:.3px; margin-bottom:6px; display:block; }
+    .stat-number{ font-size:1.9rem; font-weight:800; display:block; }
 
-    /* ===== Main content ===== */
-    .main-content{
-      margin-top: 16px;
-      border:1px solid var(--border);
-      border-radius: var(--radius);
-      padding:16px;
-      background: rgba(255,255,255,.03);
-      box-shadow: 0 12px 28px rgba(0,0,0,.28);
-    }
+    .main-content{ margin-top: 16px; border:1px solid var(--border); border-radius: var(--radius); padding:16px; background: rgba(255,255,255,.03); box-shadow: 0 12px 28px rgba(0,0,0,.28); }
     .main-footer{ text-align:center; color:var(--muted); padding:18px 10px 8px; font-size:.9rem; }
 
-    /* ======= Mobile sizing: smaller + grid so it fits nicely ======= */
-    @media (max-width: 600px){
+    /* ======= Mobile tweaks ======= */
+    @media (max-width: 640px){
+      :root{ --nav-control-h: 34px; }
+      .main-nav{ gap:10px; }
+
+      /* nav-links centered on mobile */
+      .nav-links{
+        order: 2;
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .nav-auth{
+        order: 3;
+        width: 100%;
+        margin-left: 0;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .nav-auth .greeting{ font-size: .95rem; max-width: calc(100% - 110px); }
+      .btn, .btn-outline{ padding: 0 12px; height: 34px; }
+
       .hero{ padding: 12px 12px; }
       .subtitle{ font-size: .95rem; margin-bottom: 10px; }
-
-      /* Use grid that auto-fits 2–3 items per row depending on width */
-      .hero-stats{
-        display:grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 10px;
-      }
-      .stat-item{
-        min-width: 0;           /* let grid control width */
-        padding: 10px 8px;      /* tighter padding */
-        border-radius: 8px;
-      }
+      .hero-stats{ display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+      .stat-item{ min-width: 0; padding: 10px 8px; border-radius: 8px; }
       .stat-label{ font-size: .78rem; margin-bottom: 4px; }
       .stat-number{ font-size: 1.35rem; }
     }
 
-    /* Very small phones */
     @media (max-width: 380px){
-      .hero-stats{
-        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-        gap: 8px;
-      }
+      .hero-stats{ grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
       .stat-item{ padding: 9px 6px; }
       .stat-number{ font-size: 1.25rem; }
       .stat-label{ font-size: .74rem; }
+      .nav-auth .greeting{ max-width: calc(100% - 100px); }
     }
 
-    /* Safe-area bottom padding (iOS) */
     @supports (padding: max(0px)) {
       .container { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
