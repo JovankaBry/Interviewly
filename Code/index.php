@@ -474,7 +474,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       <div class="qa reveal delay-2"><h4>What information can I save for each application?</h4><p class="muted">Company, position, job type, location, job link, source (e.g., LinkedIn), salary range, notes, and a Next Action Date for follow-ups.</p></div>
       <div class="qa reveal"><h4>How do the stats work?</h4><p class="muted">The Dashboard shows totals and success rate. The Stats page summarizes your pipeline with bar and pie charts by status.</p></div>
       <div class="qa reveal delay-1"><h4>Do I need to install anything?</h4><p class="muted">No. Tracklly runs in your browser on desktop and mobile—no downloads required.</p></div>
-      <div class="qa reveal delay-2"><h4>Can I export my data?</h4><p class="muted">CSV export is on the roadmap. For now, copy/paste works well for lists and notes.</p></div>
+      <div class="qa reveal delay-2"><h4>Can I export my data?</h4><p class="muted">Yes! You can now export you applications directly to <strong>Excel (.xlsx)</strong> with full formatting and status colors.</p></div>
       <div class="qa reveal"><h4>Is my data private?</h4><p class="muted">Your data stays in your account. Avoid sharing login credentials with others to keep it secure.</p></div>
     </div>
   </section>

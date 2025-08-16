@@ -162,6 +162,26 @@ ob_start();
   .empty-state{ text-align:center; padding:40px 10px; }
   .empty-state h3{ margin:0 0 6px 0; }
   .empty-state .muted{ color:var(--muted); margin-bottom:16px; }
+  
+  .export-btn img {
+  width: 23px;    /* make the logo small */
+  height: 30px;   /* keep square size */
+  object-fit: contain;
+}
+
+  /* ===== Added: green Export button styling (isolated) ===== */
+  .export-btn{
+    display:inline-flex; align-items:center; gap:10px; white-space:nowrap;
+    padding:10px 14px; border-radius:10px;
+    background: linear-gradient(180deg, #22c55e, #16a34a); /* green gradient */
+    color:#063; color:#ffffff; /* ensure white text */
+    font-weight:700; border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 10px 20px rgba(34,197,94,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+    transition:.18s; text-decoration:none;
+  }
+  .export-btn:hover{ transform:translateY(-1px); box-shadow:0 12px 22px rgba(34,197,94,.32); filter:brightness(1.02); }
+  .export-btn-icon{ font-size:1.1rem; }
+  @media (max-width:860px){ .export-btn{ width:100%; justify-content:center; } }
 </style>
 
 <div class="page-head">
@@ -189,6 +209,12 @@ ob_start();
       <?php if ($filter): ?><input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>"><?php endif; ?>
       <button class="search-btn" type="submit">Search</button>
     </form>
+
+    <!-- Excel button -->
+    <a href="/api/export_applications.php" class="export-btn" title="Download Excel">
+      <img src="/static/images/MExcel.png" alt="Excel"> Download Excel
+    </a>
+    <!-- ============================================= -->
 
     <a href="<?= htmlspecialchars(url_for('applications.new')) ?>" class="add-btn">
       <span class="add-btn-icon">＋</span> Add Application
