@@ -257,6 +257,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
     </nav>
     <div class="actions reveal-right is-inview">
       <?php if ($is_logged_in): ?>
+        <?php if (function_exists('is_admin') && is_admin()): ?>
+          <a class="btn-outline" href="/pages/admin/index.php">Admin</a>
+        <?php endif; ?>
         <a class="btn" href="<?= url_for('app.home') ?>">Open App</a>
       <?php else: ?>
         <a class="btn-outline" href="<?= url_for('auth.login') ?>">Login</a>
@@ -264,7 +267,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['fb_submit']))
       <?php endif; ?>
     </div>
   </header>
-
+  
   <!-- HERO -->
   <section class="section" id="about">
     <div class="limiter hero">
