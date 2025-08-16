@@ -1,7 +1,7 @@
 <?php
 // /index.php — Public landing page for Tracklly
-// Hero + three previews (applications / dashboard / stats)
-// Single-line borders, larger previews, and matching background decorations.
+// Clean marketing copy that matches your features. No pricing preview image,
+// no "More features coming soon" banner, and expanded FAQ.
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -19,7 +19,7 @@ function url_for(string $name): string {
   return $map[$name] ?? '#';
 }
 
-/* ---- Image paths ---- */
+/* ---- Image paths (used for hero + previews) ---- */
 $prev_dir  = __DIR__ . '/static/images/previews';
 $hero_src  = file_exists($prev_dir.'/preview.png')      ? '/static/images/previews/preview.png'      : '';
 $app_src   = file_exists($prev_dir.'/applications.png') ? '/static/images/previews/applications.png' : '';
@@ -32,7 +32,7 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tracklly · Job Application & Interview Tracker</title>
-  <meta name="description" content="Tracklly keeps your job applications, interviews and offers organized — from apply to offer. Free forever." />
+  <meta name="description" content="Tracklly helps you track applications, interviews, offers, notes and follow-ups. Fast search, status filters, and clear stats in one place. Free forever." />
   <link rel="icon" type="image/png" href="/static/images/icon2.png" />
 
   <style>
@@ -63,79 +63,35 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
 
     /* Sections */
     .section{padding:48px 20px}
-    .limiter{max-width:1200px;margin:0 auto}
+    .limiter{max-width:1320px;margin:0 auto}
 
-    /* Hero layout (make preview bigger) */
-    .hero{
-      display:grid;
-      grid-template-columns: 1fr 1.2fr;   /* more space for the preview */
-      gap:28px; align-items:center;
-    }
+    /* Hero layout */
+    .hero{display:grid;grid-template-columns:1fr 1.2fr;gap:28px;align-items:center}
     @media (max-width:960px){ .hero{grid-template-columns:1fr} }
 
     .kicker{display:inline-block;color:#cfe1ff;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);padding:6px 10px;border-radius:999px;font-weight:800;font-size:.9rem}
     .title{margin:12px 0 8px 0;font-size:46px;line-height:1.08;font-weight:900}
     @media (max-width:600px){ .title{font-size:34px} }
-    .subtitle{color:#c9d3e1;max-width:620px}
+    .subtitle{color:#c9d3e1;max-width:680px}
     .cta-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 
-    /* === DECORATED FRAME (single border line) === */
-    .decor{
-      position:relative;
-      border:1px solid var(--border);             /* single line border */
-      border-radius:var(--radius);
-      padding:14px;
-      background:var(--panel);
-      box-shadow:0 22px 50px rgba(0,0,0,.35);
-      overflow:hidden;
-    }
-    /* Glow decorations (shared by hero & cards) */
-    .decor::before,
-    .decor::after{
-      content:"";
-      position:absolute;
-      border-radius:50%;
-      filter:blur(30px);
-      opacity:.55;
-      pointer-events:none;
-      z-index:0;
-    }
-    .decor::before{
-      width:380px;height:220px;
-      left:-80px; top:-40px;
-      background:radial-gradient(closest-side, rgba(59,130,246,.30), transparent 65%);
-    }
-    .decor::after{
-      width:420px;height:260px;
-      right:-120px; bottom:-60px;
-      background:radial-gradient(closest-side, rgba(37,99,235,.22), transparent 65%);
-    }
+    /* Decorated frame */
+    .decor{position:relative;border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--panel);box-shadow:0 22px 50px rgba(0,0,0,.35);overflow:hidden}
+    .decor::before,.decor::after{content:"";position:absolute;border-radius:50%;filter:blur(30px);opacity:.55;pointer-events:none;z-index:0}
+    .decor::before{width:380px;height:220px;left:-80px;top:-40px;background:radial-gradient(closest-side, rgba(59,130,246,.30), transparent 65%)}
+    .decor::after{width:420px;height:260px;right:-120px;bottom:-60px;background:radial-gradient(closest-side, rgba(37,99,235,.22), transparent 65%)}
+    .canvas{position:relative;z-index:1;border-radius:12px;background:linear-gradient(135deg,#15223a,#0f1f37);overflow:hidden}
 
-    /* Inner canvas that contains the image; no dashed line anymore */
-    .canvas{
-      position:relative; z-index:1;
-      border-radius:12px;
-      background:linear-gradient(135deg,#15223a,#0f1f37);
-      overflow:hidden;
-    }
+    .hero-canvas{aspect-ratio: 16/9;width:100%}
+    .hero-canvas img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
 
-    /* Hero image: keep full view, no cropping */
-    .hero-canvas{aspect-ratio: 16/9; width:100%}
-    .hero-canvas img{
-      width:100%; height:100%;
-      object-fit:contain; object-position:center;
-      display:block;
-    }
-
-    /* Standard previews */
-    .shot{
-      height: clamp(320px, 38vw, 440px); /* bigger previews */
-    }
-    .shot img{width:100%;height:100%;object-fit:contain}  /* contain to avoid crop */
+    /* Previews */
+    .shot{height:clamp(420px,45vw,560px)}
+    .shot img{width:100%;height:100%;object-fit:contain}
     .ph{position:absolute;inset:0;display:grid;place-items:center;color:#cfe1ff;font-weight:800;letter-spacing:.2px}
 
-    /* Cards grid */
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    /* Grid */
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
     @media (max-width:1100px){ .grid3{grid-template-columns:1fr 1fr} }
     @media (max-width:720px){ .grid3{grid-template-columns:1fr} }
     .card{background:transparent;border:0;padding:0}
@@ -145,10 +101,9 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
     /* Pricing */
     .price-wrap{display:grid;grid-template-columns:1fr;gap:16px}
     .price{
-      display:grid;grid-template-columns:1fr minmax(260px,460px);gap:18px;align-items:center;
+      display:block; /* single-column: removed the preview image block */
       background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px
     }
-    @media (max-width:900px){ .price{grid-template-columns:1fr} }
     .tag{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);color:#cfe1ff;font-weight:800;font-size:.85rem}
     .big{font-size:42px;font-weight:900}
     .bullets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -159,11 +114,13 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
     /* FAQ + Footer */
     .faq .qa{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
     .faq .qa h4{margin:0 0 6px 0}
-    footer{padding:24px 10px 36px;border-top:1px solid var(--border);margin-top:26px}
+    .faq .qa + .qa{margin-top:10px}
+    footer{padding:24px 10px 36px;border-top:1px solid var(--border);margin-top:26px;text-align:center}
     .social{display:flex;gap:10px;justify-content:center;margin-top:8px}
     .icon-btn{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;background:#0b1222;border:1px solid var(--border);transition:.15s transform,.15s box-shadow,.15s filter}
     .icon-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.35);filter:brightness(1.05)}
     .icon{width:22px;height:22px;display:block}
+    .icon-btn img{width:22px;height:22px;display:block}
   </style>
 </head>
 <body>
@@ -198,8 +155,8 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
         <span class="kicker">INTERVIEW TRACKER · FREE FOREVER</span>
         <h1 class="title">Track your job hunt.<br>From apply to offer.</h1>
         <p class="subtitle">
-          Tracklly keeps your applications, interviews, and offers organized in a clean, fast UI.
-          No spreadsheets. No chaos. Just clarity.
+          Add jobs, set status (Pending · Interview · Accepted · Rejected · No Answer), save the job link and notes,
+          plan follow-ups with a Next Action Date, and see your totals and success rate at a glance.
         </p>
         <div class="cta-row">
           <?php if ($is_logged_in): ?>
@@ -211,26 +168,22 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
         </div>
       </div>
 
-      <!-- Bigger hero preview, single border, with shared decorations -->
       <div class="decor">
         <div class="canvas hero-canvas">
           <?php if ($hero_src): ?>
             <img src="<?= htmlspecialchars($hero_src) ?>" alt="Tracklly preview">
-          <?php else: ?>
-            <div class="ph">Tracklly preview</div>
-          <?php endif; ?>
+          <?php else: ?><div class="ph">Tracklly preview</div><?php endif; ?>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- PREVIEWS (Applications / Dashboard / Stats) -->
+  <!-- PREVIEWS -->
   <section class="section" id="previews">
     <div class="limiter">
       <h2 class="title" style="font-size:28px;margin:0 0 10px 0;">See Tracklly in action</h2>
       <p class="muted" style="margin:0 0 16px 0;">
-        Place screenshots in <code>/static/images/previews/</code>:
-        <code>preview.png</code> (hero), <code>applications.png</code>, <code>dashboard.png</code>, <code>stats.png</code>.
+        Real screens from the app—Applications, Dashboard, and Stats—built to keep your search organized and measurable.
       </p>
 
       <div class="grid3">
@@ -244,7 +197,10 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
             </div>
           </div>
           <div class="label">Applications</div>
-          <p class="muted">Search, filter, and update status fast. One place for every job you’ve applied to.</p>
+          <p class="muted">
+            Add new roles, search instantly, and switch filters for Pending, Interview, Accepted, Rejected or No Answer.
+            Save job link, source, location, salary range and notes for each application.
+          </p>
         </div>
 
         <!-- Dashboard -->
@@ -257,7 +213,10 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
             </div>
           </div>
           <div class="label">Dashboard</div>
-          <p class="muted">Snapshot of offers, interviews and totals at a glance.</p>
+          <p class="muted">
+            See totals (offers, interviews, all applications), success rate, and recent activity—so you always know
+            what moved last and where to focus next.
+          </p>
         </div>
 
         <!-- Stats -->
@@ -270,7 +229,10 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
             </div>
           </div>
           <div class="label">Stats</div>
-          <p class="muted">Understand success rate and trends to focus where it matters.</p>
+          <p class="muted">
+            Bar and pie charts by status help you spot trends—how many interviews you’re landing and how your pipeline
+            is distributed across stages.
+          </p>
         </div>
       </div>
     </div>
@@ -283,17 +245,32 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
       <div class="grid3">
         <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
           <h3>🧭 Organized pipeline</h3>
-          <p class="muted">Stages: Applied, Interview, Offer, Rejected, No Answer — always up to date.</p>
+          <p class="muted">Statuses: Pending, Interview, Accepted, Rejected, No Answer. Update in one click and stay on top of every role.</p>
         </div></div>
 
         <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
-          <h3>⏰ Never miss interviews</h3>
-          <p class="muted">Capture dates, locations and follow-ups in seconds.</p>
+          <h3>📝 Rich application details</h3>
+          <p class="muted">Store job link, source, location, salary range and personal notes so everything is in one place.</p>
+        </div></div>
+
+        <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
+          <h3>📅 Plan your next step</h3>
+          <p class="muted">Use the Next Action Date to remember callbacks, interviews or follow-ups—no more missed opportunities.</p>
+        </div></div>
+
+        <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
+          <h3>📊 Clear insights</h3>
+          <p class="muted">Counts and success rate on the dashboard plus charts on the Stats page show progress at a glance.</p>
         </div></div>
 
         <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
           <h3>⚡ Fast & simple</h3>
-          <p class="muted">Zero clutter. Keyboard-friendly, one-click actions.</p>
+          <p class="muted">Zero clutter UI with quick search and filters to update dozens of applications without friction.</p>
+        </div></div>
+
+        <div class="decor" style="padding:0"><div class="canvas" style="padding:18px">
+          <h3>✅ Always with you</h3>
+          <p class="muted">Works in your browser on desktop and mobile—no installs required.</p>
         </div></div>
       </div>
     </div>
@@ -313,9 +290,11 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
             <p class="muted">Everything you need to manage your job hunt efficiently.</p>
             <div class="bullets" style="margin-top:10px">
               <div class="bullet"><span class="check">✔</span><span>Unlimited applications</span></div>
-              <div class="bullet"><span class="check">✔</span><span>Status & filters</span></div>
-              <div class="bullet"><span class="check">✔</span><span>Notes & job links</span></div>
-              <div class="bullet"><span class="check">✔</span><span>Stats overview</span></div>
+              <div class="bullet"><span class="check">✔</span><span>Fast search & status filters</span></div>
+              <div class="bullet"><span class="check">✔</span><span>Job link, source, salary & notes</span></div>
+              <div class="bullet"><span class="check">✔</span><span>Dashboard totals & success rate</span></div>
+              <div class="bullet"><span class="check">✔</span><span>Charts on the Stats page</span></div>
+              <div class="bullet"><span class="check">✔</span><span>Next Action Date for follow-ups</span></div>
             </div>
             <div style="margin-top:14px">
               <?php if ($is_logged_in): ?>
@@ -326,14 +305,7 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
               <?php endif; ?>
             </div>
           </div>
-
-          <div class="decor">
-            <div class="canvas shot">
-              <?php if ($stats_src): ?>
-                <img src="<?= htmlspecialchars($stats_src) ?>" alt="Stats preview (pricing)">
-              <?php else: ?><div class="ph">Your progress at a glance</div><?php endif; ?>
-            </div>
-          </div>
+          <!-- Removed the right-side preview image on purpose -->
         </div>
       </div>
 
@@ -344,34 +316,57 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
   <section class="section" id="faq">
     <div class="limiter faq">
       <h2 class="title" style="font-size:28px;margin:0 0 10px 0;">FAQ</h2>
+
       <div class="qa">
         <h4>Is Tracklly really free?</h4>
         <p class="muted">Yes. Track as many applications as you want for $0/month.</p>
       </div>
-      <div class="qa" style="margin-top:10px">
-        <h4>Do I need to install anything?</h4>
-        <p class="muted">No installation. It runs in your browser on desktop and mobile.</p>
+
+      <div class="qa">
+        <h4>What statuses can I use?</h4>
+        <p class="muted">You can switch between Pending, Interview, Accepted, Rejected, and No Answer at any time.</p>
       </div>
-      <div class="qa" style="margin-top:10px">
+
+      <div class="qa">
+        <h4>What information can I save for each application?</h4>
+        <p class="muted">Company, position, job type, location, job link, source (e.g., LinkedIn), salary range, notes, and a Next Action Date for follow-ups.</p>
+      </div>
+
+      <div class="qa">
+        <h4>How do the stats work?</h4>
+        <p class="muted">The Dashboard shows totals and success rate. The Stats page summarizes your pipeline with bar and pie charts by status.</p>
+      </div>
+
+      <div class="qa">
+        <h4>Do I need to install anything?</h4>
+        <p class="muted">No. Tracklly runs in your browser on desktop and mobile—no downloads required.</p>
+      </div>
+
+      <div class="qa">
         <h4>Can I export my data?</h4>
         <p class="muted">CSV export is on the roadmap. For now, copy/paste works well for lists and notes.</p>
+      </div>
+
+      <div class="qa">
+        <h4>Is my data private?</h4>
+        <p class="muted">Your data stays in your account. Avoid sharing login credentials with others to keep it secure.</p>
       </div>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div style="text-align:center">
-      <img src="/static/images/icon2.png" alt="Tracklly" style="height:46px;margin:0 auto 6px;border-radius:10px">
-      <div class="muted">&copy; <?= date('Y') ?> Tracklly. All rights reserved.</div>
-      <div class="social" aria-label="Follow us">
-        <a class="icon-btn" href="https://www.tiktok.com/@tracklly" target="_blank" rel="noopener">
-          <svg class="icon" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12.9 2h3.1c.2 1.1.7 2.1 1.4 3 .8.9 1.8 1.6 2.9 2v3.2c-1.6-.1-3.1-.6-4.4-1.5v5.9c0 3.7-3 6.6-6.6 6.6S2.8 18.3 2.8 14.6c0-3.5 2.6-6.3 6-6.6v3.3c-1.5.3-2.6 1.6-2.6 3.3 0 1.9 1.5 3.4 3.4 3.4 1.9 0 3.4-1.5 3.4-3.4V2z"/></svg>
-        </a>
-        <a class="icon-btn" href="https://www.instagram.com/tracklly/#" target="_blank" rel="noopener">
-          <svg class="icon" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm5.6-.9a1.1 1.1 0 1 0 0-2.2 1.1 1.1 0 0 0 0 2.2z"/></svg>
-        </a>
-      </div>
+    <img src="/static/images/icon2.png" alt="Tracklly" style="height:46px;margin:0 auto 6px;border-radius:10px">
+    <div class="muted">&copy; <?= date('Y') ?> Tracklly. All rights reserved.</div>
+    <div class="social" aria-label="Follow us">
+      <!-- TikTok -->
+      <a class="icon-btn" href="https://www.tiktok.com/@tracklly" target="_blank" rel="noopener" aria-label="Follow us on TikTok">
+        <img src="/static/images/tiktok.png" alt="TikTok">
+      </a>
+      <!-- Instagram -->
+      <a class="icon-btn" href="https://www.instagram.com/tracklly/" target="_blank" rel="noopener" aria-label="Follow us on Instagram">
+        <img src="/static/images/instagram.png" alt="Instagram">
+      </a>
     </div>
   </footer>
 
@@ -379,11 +374,11 @@ $stats_src = file_exists($prev_dir.'/stats.png')        ? '/static/images/previe
     // Smooth in-page scrolling
     document.querySelectorAll('a[href^="#"]').forEach(a=>{
       a.addEventListener('click', e=>{
-        const id = a.getAttribute('href').slice(1);
-        const el = document.getElementById(id);
-        if(el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
-      });
-    });
+        const id=a.getAttribute('href').slice(1);
+        const el=document.getElementById(id);
+        if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth',block:'start'})}
+      })
+    })
   </script>
 </body>
 </html>
